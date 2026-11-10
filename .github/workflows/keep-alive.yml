@@ -15,11 +15,12 @@ jobs:
     steps:
       - name: Appel de la fonction keep_alive()
         env:
-          URL: ${{ secrets.VITE_SUPABASE_URL }}
-          KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          URL: ${{ secrets.VITE_SUPABASE_URL || vars.VITE_SUPABASE_URL }}
+          KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || vars.VITE_SUPABASE_ANON_KEY }}
         run: |
-          if [ -z "$URL" ] || [ -z "$KEY" ]; then echo "Secrets Supabase manquants"; exit 1; fi
+          if [ -z "$URL" ] || [ -z "$KEY" ]; then echo "::error::Secrets VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY introuvables (Settings > Secrets and variables > Actions > Repository secrets)"; exit 1; fi
+          URL="${URL%/}"; URL="${URL%/rest/v1}"
           status=$(curl -s -o response.txt -w "%{http_code}" -X POST "$URL/rest/v1/rpc/keep_alive" \
-            -H "apikey: $KEY" -H "Authorization: Bearer $KEY" -H "Content-Type: application/json" -d '{}')
+            -H "apikey: $KEY" -H "Content-Type: application/json" -d '{}')
           echo "HTTP $status — $(cat response.txt)"
           test "$status" = "200"
