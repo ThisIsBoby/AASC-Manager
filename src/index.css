@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root { color-scheme: dark; }
+  html, body, #root { min-height: 100%; }
+  body {
+    @apply bg-aasc-night text-slate-100 font-sans antialiased;
+    background-image:
+      radial-gradient(1200px 500px at 110% -10%, rgba(26,90,154,.25), transparent 60%),
+      radial-gradient(900px 400px at -10% 110%, rgba(238,125,31,.12), transparent 60%);
+    background-attachment: fixed;
+  }
+  html.light body {
+    @apply bg-slate-100 text-slate-900;
+    background-image: none;
+  }
+  html.light { color-scheme: light; }
+  h1, h2, h3 { @apply font-display; }
+  input, select, textarea { color-scheme: inherit; }
+}
+
+@layer components {
+  .card {
+    @apply relative rounded-2xl border border-aasc-line bg-aasc-ink/90 shadow-card backdrop-blur;
+  }
+  html.light .card { @apply bg-white border-slate-200 shadow-md; }
+  .card-accent::before {
+    content: ''; position: absolute; left: 0; top: 14px; bottom: 14px; width: 4px;
+    border-radius: 0 4px 4px 0; background: linear-gradient(180deg,#EE7D1F,#E8641A);
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold
+      transition active:scale-[.97] disabled:opacity-50 disabled:pointer-events-none select-none;
+  }
+  .btn-primary {
+    @apply btn text-white shadow-glow;
+    background: linear-gradient(110deg,#F6A25B -20%,#EE7D1F 40%,#E8641A 100%);
+  }
+  .btn-primary:hover { filter: brightness(1.08); }
+  .btn-secondary { @apply btn bg-aasc-blue text-white hover:bg-aasc-blue-light; }
+  .btn-ghost { @apply btn border border-aasc-line bg-white/5 text-slate-200 hover:bg-white/10; }
+  html.light .btn-ghost { @apply bg-white text-slate-700 border-slate-300 hover:bg-slate-50; }
+  .btn-danger { @apply btn bg-red-600/90 text-white hover:bg-red-600; }
+  .btn-icon { @apply btn px-2.5; }
+
+  .input {
+    @apply w-full rounded-xl border border-aasc-line bg-aasc-night/70 px-3.5 py-2.5 text-sm text-slate-100
+      placeholder:text-slate-500 outline-none transition focus:border-aasc-orange focus:ring-2 focus:ring-aasc-orange/30;
+  }
+  html.light .input { @apply bg-white text-slate-900 border-slate-300; }
+  .label { @apply mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-400; }
+
+  .title-sport { @apply font-display font-black italic uppercase tracking-tight; }
+  .chip { @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold; }
+
+  .speedlines { position: relative; overflow: hidden; isolation: isolate; }
+  .speedlines::before, .speedlines::after {
+    content: ''; position: absolute; z-index: -1; height: 10px; border-radius: 999px; transform: skewX(-24deg) rotate(-14deg);
+  }
+  .speedlines::before { width: 55%; right: -8%; top: 22%; background: linear-gradient(90deg,transparent,#EE7D1F); opacity:.55; }
+  .speedlines::after { width: 40%; right: 4%; top: 42%; background: linear-gradient(90deg,transparent,#1A5A9A); opacity:.7; }
+
+  .table-sport { @apply w-full text-sm; }
+  .table-sport th { @apply px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-aasc-line; }
+  .table-sport td { @apply px-3 py-2.5 border-b border-aasc-line/60; }
+  html.light .table-sport th, html.light .table-sport td { @apply border-slate-200; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+@media print {
+  body { background: #fff !important; color: #000 !important; }
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
+  html.light .card, .card { box-shadow: none !important; border-color: #ddd !important; background: #fff !important; }
+}
+.print-only { display: none; }
+
+html.light .surface { background-color: rgba(255,255,255,.94) !important; border-color: #e2e8f0 !important; }
+html.light .text-white { color: #0B0F1A; }
+html.light .btn-primary, html.light .btn-secondary, html.light .btn-danger, html.light .bg-aasc-orange { color: #fff; }
+
+@media print {
+  @page { size: A4; margin: 10mm; }
+  main { padding: 0 !important; }
+  .etiquettes-grid { grid-template-columns: 1fr 1fr !important; gap: 6mm !important; }
+  .etiquette { height: 58mm; }
+}
