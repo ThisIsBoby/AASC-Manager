@@ -1,9 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
 
-const url = import.meta.env.VITE_SUPABASE_URL
-const key = import.meta.env.VITE_SUPABASE_ANON_KEY
+// Tolère une URL copiée avec /rest/v1, /auth/v1 ou un slash final
+const url = import.meta.env.VITE_SUPABASE_URL?.trim().replace(/\/(rest|auth)\/v1\/?$/i, '').replace(/\/+$/, '')
+const key = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim()
 
-export const supabaseConfigured = Boolean(url && key)
+/** L'URL doit être celle du projet Supabase (https://xxxx.supabase.co), pas celle du site */
+export const supabaseUrlInvalide = Boolean(url) && !/^https?:\/\/[^/]+(\.supabase\.co|:\d+)\/?$/i.test(url!.trim())
+export const supabaseConfigured = Boolean(url && key) && !supabaseUrlInvalide
 
 // PKCE : les retours d'e-mail (confirmation, mot de passe oublié) arrivent en ?code=...
 // ce qui est compatible avec le HashRouter (#/...) de GitHub Pages.
@@ -21,6 +24,8 @@ export function errMsg(e: unknown): string {
   if (!e) return 'Erreur inconnue'
   if (typeof e === 'string') return e
   const m = (e as { message?: string }).message ?? String(e)
+  if (m.includes('Failed to fetch') || m.includes('NetworkError'))
+    return 'Impossible de joindre le serveur Supabase : vérifiez votre connexion, l\'URL du projet, ou que le projet n\'est pas en pause.'
   if (m.includes('Invalid login credentials')) return 'E-mail ou mot de passe incorrect.'
   if (m.includes('Email not confirmed')) return 'E-mail non confirmé : cliquez sur le lien reçu par e-mail.'
   if (m.includes('User already registered')) return 'Un compte existe déjà avec cet e-mail.'
