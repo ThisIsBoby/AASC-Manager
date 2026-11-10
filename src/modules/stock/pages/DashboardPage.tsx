@@ -80,12 +80,12 @@ export function DashboardPage() {
           <section className="card p-5 lg:col-span-2">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="title-sport flex items-center gap-2 text-lg"><Trophy size={18} className="text-aasc-orange" /> Tournois en préparation</h2>
-              <Link to="/stock/tournois" className="text-sm font-semibold text-aasc-orange-soft hover:underline">Gérer →</Link>
+              <Link to="/tournois" className="text-sm font-semibold text-aasc-orange-soft hover:underline">Gérer →</Link>
             </div>
             {tournois.length === 0 ? <p className="text-sm text-slate-400">Aucun tournoi en préparation.</p> : (
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {tournois.map(t => (
-                  <Link key={t.id} to={`/stock/tournois/${t.id}`} className="rounded-xl border border-aasc-line p-3 transition hover:border-aasc-orange">
+                  <Link key={t.id} to={`/tournois/${t.id}`} className="rounded-xl border border-aasc-line p-3 transition hover:border-aasc-orange">
                     <p className="font-semibold">{t.nom}</p>
                     <p className="text-xs text-slate-400">{fmtDate(t.date)} · {t.nb_joueurs} joueurs</p>
                   </Link>

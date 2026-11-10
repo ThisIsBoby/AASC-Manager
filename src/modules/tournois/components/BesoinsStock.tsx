@@ -1,52 +1,46 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, PackageMinus, Printer, Trash2, Users } from 'lucide-react'
-import { useAuth } from '@/core/auth/AuthProvider'
+import { Link } from 'react-router-dom'
+import { PackageMinus, Users } from 'lucide-react'
 import { errMsg } from '@/core/supabase'
 import type { Tournoi } from '@/core/types'
-import { Badge, EmptyState, PageHeader, Spinner, StatTile, fmtQ, useToast } from '@/core/ui'
-import { useDelete, useModeleLignes, useModeles, useStockProduits, useSortirTournoi, useTournois, useUpsert } from '../api'
-import { fmtDate, useRefs } from '../components/shared'
-import { calculPreparation } from '../logic'
+import { Badge, EmptyState, StatTile, fmtQ, useToast } from '@/core/ui'
+import { useModeleLignes, useModeles, useSortirTournoi, useStockProduits, useUpsert } from '@/modules/stock/api'
+import { useRefs } from '@/modules/stock/components/shared'
+import { calculPreparation } from '@/modules/stock/logic'
 
-export function TournoiDetailPage() {
-  const { id } = useParams()
-  const nav = useNavigate()
+/** Onglet « Besoins stock » du tableau de bord d'un tournoi */
+export function BesoinsStock({ t }: { t: Tournoi }) {
   const toast = useToast()
-  const { isAdmin } = useAuth()
-  const tournois = useTournois()
-  const t = tournois.data?.find(x => x.id === id)
   const modeles = useModeles().data ?? []
   const lignes = useModeleLignes().data ?? []
   const stock = useStockProduits().data ?? []
   const refs = useRefs()
   const upsert = useUpsert<Tournoi>('tournois', ['tournois'])
-  const del = useDelete('tournois', ['tournois'])
   const sortir = useSortirTournoi()
-  const [nb, setNb] = useState(0)
+  const [nb, setNb] = useState(t.nb_joueurs)
 
-  useEffect(() => { if (t) setNb(t.nb_joueurs) }, [t?.id, t?.nb_joueurs]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setNb(t.nb_joueurs) }, [t.id, t.nb_joueurs])
 
   const prepa = useMemo(() => {
-    if (!t?.modele_id) return []
+    if (!t.modele_id) return []
     const map = new Map(stock.map(s => [s.id, Number(s.stock_valide)]))
     return calculPreparation(lignes.filter(l => l.modele_id === t.modele_id), nb, map)
-  }, [t?.modele_id, lignes, stock, nb])
-
-  if (tournois.isLoading) return <Spinner />
-  if (!t) return <EmptyState title="Tournoi introuvable"><Link to="/stock/tournois" className="text-aasc-orange">Retour</Link></EmptyState>
+  }, [t.modele_id, lignes, stock, nb])
 
   const enPrepa = t.statut === 'prepa'
   const manque = prepa.filter(p => p.aAcheter > 0)
   const couverture = prepa.length ? Math.round((prepa.filter(p => p.aAcheter === 0).length / prepa.length) * 100) : 100
 
   async function saveNb() {
-    if (!t || nb === t.nb_joueurs || nb < 1) return
+    if (nb === t.nb_joueurs || nb < 1) return
     try { await upsert.mutateAsync({ id: t.id, nb_joueurs: nb }); toast('Nombre de joueurs mis à jour') } catch (e) { toast(errMsg(e), 'err') }
   }
 
+  async function changerModele(modele_id: string) {
+    try { await upsert.mutateAsync({ id: t.id, modele_id: modele_id || null }); toast('Modèle de besoins mis à jour') } catch (e) { toast(errMsg(e), 'err') }
+  }
+
   async function doSortir() {
-    if (!t) return
     const msg = manque.length
       ? `Stock insuffisant pour ${manque.length} produit(s) : seul le disponible sera sorti. Continuer ?`
       : `Sortir du stock tous les besoins du tournoi « ${t.nom} » ?`
@@ -61,16 +55,16 @@ export function TournoiDetailPage() {
 
   return (
     <div>
-      <Link to="/stock/tournois" className="no-print mb-3 inline-flex items-center gap-1 text-sm text-slate-400 hover:text-white"><ArrowLeft size={16} /> Tournois</Link>
-      <PageHeader kicker={`${fmtDate(t.date)} · ${modeles.find(m => m.id === t.modele_id)?.nom ?? 'Sans modèle'}`} title={t.nom}
-        actions={<>
-          <button className="btn-ghost" onClick={() => window.print()}><Printer size={16} /> Imprimer</button>
-          {enPrepa && <button className="btn-primary" onClick={doSortir} disabled={sortir.isPending || !prepa.length}><PackageMinus size={16} /> Sortir du stock</button>}
-          {isAdmin && <button className="btn-ghost text-red-300" onClick={async () => {
-            if (!confirm('Supprimer ce tournoi ? (les mouvements de stock déjà faits sont conservés)')) return
-            try { await del.mutateAsync(t.id); nav('/stock/tournois') } catch (e) { toast(errMsg(e), 'err') }
-          }}><Trash2 size={16} /></button>}
-        </>} />
+      <div className="no-print mb-4 flex flex-wrap items-end gap-3">
+        <label className="block min-w-[220px]">
+          <span className="label">Modèle de besoins</span>
+          <select className="input" disabled={!enPrepa} value={t.modele_id ?? ''} onChange={e => changerModele(e.target.value)}>
+            <option value="">Aucun</option>
+            {modeles.map(m => <option key={m.id} value={m.id}>{m.nom}</option>)}
+          </select>
+        </label>
+        {enPrepa && <button className="btn-primary" onClick={doSortir} disabled={sortir.isPending || !prepa.length}><PackageMinus size={16} /> Sortir du stock</button>}
+      </div>
 
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
         <div className="card card-accent col-span-2 p-4 sm:col-span-1">
@@ -88,7 +82,8 @@ export function TournoiDetailPage() {
 
       {!enPrepa && <p className="mb-4"><Badge tone="green">Besoins déjà sortis du stock</Badge> <Link className="ml-2 text-sm text-aasc-orange-soft hover:underline" to="/stock/historique?periode=tout">voir l'historique</Link></p>}
 
-      {!prepa.length ? <EmptyState title="Aucun besoin">Le modèle associé ne contient aucune ligne.</EmptyState> : (
+      {!t.modele_id ? <EmptyState title="Aucun modèle de besoins">Choisissez un modèle ci-dessus pour calculer les consommables nécessaires.</EmptyState>
+        : !prepa.length ? <EmptyState title="Aucun besoin">Le modèle associé ne contient aucune ligne.</EmptyState> : (
         <div className="card overflow-x-auto">
           <table className="table-sport">
             <thead><tr><th>Produit</th><th className="text-right">Besoin</th><th className="text-right">En stock</th><th className="text-right">À acheter</th><th className="no-print hidden sm:table-cell" /></tr></thead>

@@ -26,7 +26,7 @@ Les droits sont appliqués dans la base (Row Level Security), pas seulement dans
 
 ### 1. Supabase
 1. Créer un compte sur <https://supabase.com> puis un **nouveau projet** (région Europe).
-2. *SQL Editor* → coller et exécuter `supabase/migrations/0001_init.sql`.
+2. *SQL Editor* → coller et exécuter `supabase/migrations/0001_init.sql`, puis `supabase/migrations/0002_checklist.sql` (checklists de tournoi).
 3. (Optionnel) exécuter `supabase/seed.sql` pour des produits, caisses et un modèle de tournoi d'exemple.
 4. *Authentication → URL Configuration* :
    - **Site URL** : `https://<votre-compte>.github.io/<nom-du-depot>/`

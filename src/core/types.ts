@@ -52,3 +52,13 @@ export interface Tournoi {
   id: string; nom: string; date: string | null; nb_joueurs: number
   modele_id: string | null; statut: 'prepa' | 'termine'; created_at: string
 }
+
+export interface ModeleChecklist { id: string; nom: string; description: string }
+export interface ModeleChecklistTache {
+  id: string; modele_id: string; libelle: string; categorie: string; jours_avant: number | null; ordre: number
+}
+export interface TournoiTache {
+  id: string; tournoi_id: string; libelle: string; categorie: string; echeance: string | null
+  responsable_id: string | null; fait: boolean; fait_par: string | null; fait_le: string | null
+  ordre: number; created_at: string
+}

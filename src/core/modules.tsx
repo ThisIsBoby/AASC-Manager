@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react'
 import type { RouteObject } from 'react-router-dom'
 import { stockModule } from '@/modules/stock'
+import { tournoisModule } from '@/modules/tournois'
 import { adminModule } from '@/modules/admin'
 
 export interface NavItem {
@@ -22,4 +23,4 @@ export interface AppModule {
 
 // ➜ Pour ajouter un futur module (adhérents, compétitions, finances...), créez src/modules/<nom>/index.tsx
 //   et ajoutez-le simplement à cette liste.
-export const modules: AppModule[] = [stockModule, adminModule]
+export const modules: AppModule[] = [stockModule, tournoisModule, adminModule]
