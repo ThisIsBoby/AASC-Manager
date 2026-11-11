@@ -1,14 +1,14 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { AlertTriangle, Euro, PackageCheck, ShoppingBag, Wrench } from 'lucide-react'
-import { Badge, PageHeader, StatTile, fmtQ } from '@/core/ui'
+import { AlertTriangle, Euro, PackageCheck, Wrench } from 'lucide-react'
+import { Badge, StatTile, fmtQ } from '@/core/ui'
 import { useStockProduits } from '@/modules/stock/api'
 import { useArticles, useCordages, useVariantes, useVentes } from '../api'
-import { CordageForm, VenteForm } from '../components/shared'
-import { CordagesTable, VentesTable } from '../components/tables'
+import { CordagesTable, VentesTable } from './tables'
 import { estStockBas, libelleVente, resteAPayer, fmtEuro } from '../logic'
 
-export function BoutiqueDashboardPage() {
+/** Bloc « Boutique & Cordage » de l'accueil commun. */
+export function BoutiqueAccueil() {
   const ventes = useVentes().data ?? []
   const cordages = useCordages().data ?? []
   const articles = useArticles().data ?? []
@@ -16,8 +16,6 @@ export function BoutiqueDashboardPage() {
   const stockList = useStockProduits().data
   const stock = useMemo(() => new Map((stockList ?? []).map(s => [s.id, s])), [stockList])
   const nav = useNavigate()
-  const [vente, setVente] = useState(false)
-  const [cordage, setCordage] = useState(false)
 
   const aCorder = cordages.filter(c => c.statut === 'deposee')
   const aRendre = cordages.filter(c => c.statut === 'cordee')
@@ -28,13 +26,7 @@ export function BoutiqueDashboardPage() {
 
   return (
     <div>
-      <PageHeader kicker="Boutique & Cordage" title="Tableau de bord"
-        actions={<>
-          <button className="btn-primary" onClick={() => setVente(true)}><ShoppingBag size={18} /> Nouvelle vente</button>
-          <button className="btn-primary" onClick={() => setCordage(true)}><Wrench size={18} /> Nouveau cordage</button>
-        </>} />
-
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatTile label="Raquettes à corder" value={aCorder.length} tone="orange" icon={<Wrench size={16} />} onClick={() => nav('/boutique/cordages')} />
         <StatTile label="À rendre" value={aRendre.length} tone="blue" icon={<PackageCheck size={16} />} onClick={() => nav('/boutique/cordages')} />
         <StatTile label="Impayés" value={fmtEuro(du.total)} tone={du.total > 0 ? 'red' : 'green'} icon={<Euro size={16} />} onClick={() => nav('/boutique/ventes?paye=non')} />
@@ -42,7 +34,7 @@ export function BoutiqueDashboardPage() {
       </div>
 
       {bas.length > 0 && (
-        <div className="card mb-6 p-4">
+        <div className="card mb-4 p-4">
           <p className="mb-2 text-sm font-semibold text-red-300">Articles sous le seuil</p>
           <div className="flex flex-wrap gap-2">
             {bas.map(({ v, a }) => (
@@ -63,9 +55,6 @@ export function BoutiqueDashboardPage() {
         <Link to="/boutique/ventes" className="text-sm text-aasc-orange-soft hover:underline">Tout voir</Link>
       </div>
       {ventes.length ? <VentesTable ventes={ventes.slice(0, 8)} /> : <p className="text-sm text-slate-400">Aucune vente.</p>}
-
-      <VenteForm open={vente} onClose={() => setVente(false)} />
-      <CordageForm open={cordage} onClose={() => setCordage(false)} />
     </div>
   )
 }

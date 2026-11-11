@@ -1,17 +1,15 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { AlertTriangle, Boxes, CalendarClock, PackageX, ScanLine, ShoppingCart, Trophy } from 'lucide-react'
-import { useAuth } from '@/core/auth/AuthProvider'
-import { Badge, PageHeader, Spinner, StatTile, fmtQ } from '@/core/ui'
-import { useCaisses, usePeremptions, useStockProduits, useTournois } from '../api'
-import { fmtDate } from '../components/shared'
+import { AlertTriangle, Boxes, CalendarClock, PackageX } from 'lucide-react'
+import { Badge, Spinner, StatTile, fmtQ } from '@/core/ui'
+import { useCaisses, usePeremptions, useStockProduits } from '../api'
+import { fmtDate } from './shared'
 
-export function DashboardPage() {
-  const { profile } = useAuth()
+/** Bloc « Stock & Inventaire » de l'accueil commun. */
+export function StockAccueil() {
   const nav = useNavigate()
   const caisses = useCaisses().data ?? []
   const stock = useStockProduits()
   const per = usePeremptions().data ?? []
-  const tournois = (useTournois().data ?? []).filter(t => t.statut === 'prepa')
 
   const perimes = per.filter(p => p.jours_restants < 0)
   const bientot = per.filter(p => p.jours_restants >= 0)
@@ -19,9 +17,6 @@ export function DashboardPage() {
 
   return (
     <div>
-      <PageHeader kicker={`Salut ${profile?.nom?.split(' ')[0] ?? ''} 👋`} title="Tableau de bord"
-        actions={<button className="btn-primary" onClick={() => nav('/stock/scanner')}><ScanLine size={18} /> Scanner une caisse</button>} />
-
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatTile label="Caisses" value={caisses.filter(c => c.actif).length} tone="blue" icon={<Boxes size={16} />} onClick={() => nav('/stock/caisses')} />
         <StatTile label="Sous le seuil" value={sousSeuil.length} tone={sousSeuil.length ? 'orange' : 'green'} icon={<PackageX size={16} />} onClick={() => nav('/stock/achats')} />
@@ -30,7 +25,7 @@ export function DashboardPage() {
       </div>
 
       {stock.isLoading ? <Spinner /> : (
-        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
           <section className="card card-accent p-5">
             <h2 className="title-sport mb-3 flex items-center gap-2 text-lg"><AlertTriangle size={18} className="text-red-400" /> Péremptions</h2>
             {per.length === 0 ? <p className="text-sm text-slate-400">Rien à signaler sur les 30 prochains jours. 🏸</p> : (
@@ -75,24 +70,6 @@ export function DashboardPage() {
                 })}
               </ul>
             )}
-          </section>
-
-          <section className="card p-5 lg:col-span-2">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="title-sport flex items-center gap-2 text-lg"><Trophy size={18} className="text-aasc-orange" /> Tournois en préparation</h2>
-              <Link to="/tournois" className="text-sm font-semibold text-aasc-orange-soft hover:underline">Gérer →</Link>
-            </div>
-            {tournois.length === 0 ? <p className="text-sm text-slate-400">Aucun tournoi en préparation.</p> : (
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {tournois.map(t => (
-                  <Link key={t.id} to={`/tournois/${t.id}`} className="rounded-xl border border-aasc-line p-3 transition hover:border-aasc-orange">
-                    <p className="font-semibold">{t.nom}</p>
-                    <p className="text-xs text-slate-400">{fmtDate(t.date)} · {t.nb_joueurs} joueurs</p>
-                  </Link>
-                ))}
-              </div>
-            )}
-            <Link to="/stock/achats" className="btn-ghost mt-4"><ShoppingCart size={16} /> Comparer stock et achats à faire</Link>
           </section>
         </div>
       )}

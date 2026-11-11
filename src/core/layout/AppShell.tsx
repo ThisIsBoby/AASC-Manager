@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { LayoutDashboard, Boxes, ScanLine, ShoppingCart, Menu, LogOut, Sun, Moon, UserCircle2, X } from 'lucide-react'
+import { LayoutDashboard, Boxes, Plus, Wrench, Menu, LogOut, Sun, Moon, UserCircle2, X } from 'lucide-react'
 import { modules, type NavItem } from '../modules'
+import { QuickActionSheet, QuickActionsProvider } from '../accueil/QuickActions'
 import { useAuth } from '../auth/AuthProvider'
 import { supabase } from '../supabase'
 import { Logo } from '../ui'
@@ -40,6 +41,7 @@ function NavContent({ onNavigate }: { onNavigate?: () => void }) {
   const pending = usePendingCount(isAdmin).data
   return (
     <nav className="flex flex-col gap-5">
+      <NavEntry item={{ to: '/accueil', label: 'Accueil', icon: LayoutDashboard }} onClick={onNavigate} />
       {modules.filter(m => !m.adminOnly || isAdmin).map(m => (
         <div key={m.id}>
           <p className="mb-1.5 px-3 text-[10px] font-bold uppercase tracking-[.25em] text-slate-500">{m.nom}</p>
@@ -76,17 +78,19 @@ function UserCard() {
 
 export function AppShell() {
   const [drawer, setDrawer] = useState(false)
+  const [sheet, setSheet] = useState(false)
   const { isAdmin } = useAuth()
   const pending = usePendingCount(isAdmin).data
 
   const bottom = [
-    { to: '/stock', label: 'Accueil', icon: LayoutDashboard, end: true },
-    { to: '/stock/caisses', label: 'Caisses', icon: Boxes },
+    { to: '/accueil', label: 'Accueil', icon: LayoutDashboard },
+    { to: '/boutique/cordages', label: 'Cordages', icon: Wrench },
     null,
-    { to: '/stock/achats', label: 'Achats', icon: ShoppingCart },
+    { to: '/stock/caisses', label: 'Caisses', icon: Boxes },
   ]
 
   return (
+    <QuickActionsProvider>
     <div className="min-h-screen lg:flex">
       {/* Sidebar desktop */}
       <aside className="surface no-print sticky top-0 hidden h-screen w-64 shrink-0 flex-col gap-6 border-r border-aasc-line bg-aasc-ink/60 p-4 backdrop-blur lg:flex">
@@ -115,15 +119,15 @@ export function AppShell() {
       <nav className="surface no-print fixed inset-x-0 bottom-0 z-40 border-t border-aasc-line bg-aasc-ink/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
         <div className="grid grid-cols-5 items-end">
           {bottom.map((b, i) => b === null ? (
-            <NavLink key="scan" to="/stock/scanner" className="-mt-7 flex flex-col items-center gap-1 pb-2">
+            <button key="actions" onClick={() => setSheet(true)} aria-label="Actions rapides" className="-mt-7 flex flex-col items-center gap-1 pb-2">
               <span className="flex h-16 w-16 items-center justify-center rounded-full border-4 border-aasc-night text-white shadow-glow"
                 style={{ background: 'linear-gradient(135deg,#F6A25B,#EE7D1F 45%,#E8641A)' }}>
-                <ScanLine size={28} />
+                <Plus size={30} />
               </span>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-aasc-orange">Scanner</span>
-            </NavLink>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-aasc-orange">Actions</span>
+            </button>
           ) : (
-            <NavLink key={i} to={b.to} end={b.end}
+            <NavLink key={i} to={b.to}
               className={({ isActive }) => `flex flex-col items-center gap-1 py-2.5 text-[10px] font-bold uppercase tracking-wider ${isActive ? 'text-aasc-orange' : 'text-slate-400'}`}>
               <b.icon size={22} />{b.label}
             </NavLink>
@@ -149,6 +153,9 @@ export function AppShell() {
           </div>
         </div>
       )}
+
+      <QuickActionSheet open={sheet} onClose={() => setSheet(false)} />
     </div>
+    </QuickActionsProvider>
   )
 }

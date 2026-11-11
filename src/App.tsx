@@ -9,16 +9,18 @@ import { ProfilPage } from './core/ProfilPage'
 import { Spinner } from './core/ui'
 import { supabaseConfigured, supabaseUrlInvalide } from './core/supabase'
 import { AuthLayout } from './core/auth/AuthLayout'
+import { AccueilPage } from './core/accueil/AccueilPage'
 
 const router = createHashRouter([
   {
     path: '/',
     element: <AppShell />,
     children: [
-      { index: true, element: <Navigate to="/stock" replace /> },
+      { index: true, element: <Navigate to="/accueil" replace /> },
+      { path: 'accueil', element: <AccueilPage /> },
       ...modules.flatMap(m => m.routes),
       { path: 'profil', element: <ProfilPage /> },
-      { path: '*', element: <Navigate to="/stock" replace /> },
+      { path: '*', element: <Navigate to="/accueil" replace /> },
     ],
   },
 ])

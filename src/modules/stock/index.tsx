@@ -1,7 +1,7 @@
 import { Navigate, useParams } from 'react-router-dom'
-import { LayoutDashboard, ScanLine, Boxes, Package, History, ShoppingCart, QrCode } from 'lucide-react'
+import { ScanLine, Boxes, Package, History, ShoppingCart, QrCode } from 'lucide-react'
 import type { AppModule } from '@/core/modules'
-import { DashboardPage } from './pages/DashboardPage'
+import { StockAccueil } from './components/StockAccueil'
 import { ScannerPage } from './pages/ScannerPage'
 import { CaissesPage } from './pages/CaissesPage'
 import { CaisseDetailPage } from './pages/CaisseDetailPage'
@@ -14,7 +14,6 @@ export const stockModule: AppModule = {
   id: 'stock',
   nom: 'Stock & Inventaire',
   nav: [
-    { to: '/stock', label: 'Tableau de bord', icon: LayoutDashboard, end: true },
     { to: '/stock/scanner', label: 'Scanner', icon: ScanLine },
     { to: '/stock/caisses', label: 'Caisses', icon: Boxes },
     { to: '/stock/produits', label: 'Produits', icon: Package },
@@ -22,8 +21,13 @@ export const stockModule: AppModule = {
     { to: '/stock/historique', label: 'Historique', icon: History },
     { to: '/stock/etiquettes', label: 'Étiquettes QR', icon: QrCode },
   ],
+  quickActions: [
+    { id: 'scanner', label: 'Scanner une caisse', hint: 'Entrée, sortie, inventaire', icon: ScanLine, to: '/stock/scanner' },
+  ],
+  Accueil: StockAccueil,
   routes: [
-    { path: 'stock', element: <DashboardPage /> },
+    // L'ancien tableau de bord stock est désormais l'accueil commun
+    { path: 'stock', element: <Navigate to="/accueil" replace /> },
     { path: 'stock/scanner', element: <ScannerPage /> },
     { path: 'stock/caisses', element: <CaissesPage /> },
     { path: 'stock/caisse/:id', element: <CaisseDetailPage /> },
