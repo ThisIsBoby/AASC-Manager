@@ -67,7 +67,7 @@ export interface ArticleVariante {
 }
 export interface OffreCordage { id: string; nom: string; prix: number; produit_id: string | null; actif: boolean; ordre: number }
 
-export type MoyenPaiement = '' | 'especes' | 'cheque' | 'virement' | 'cb' | 'helloasso' | 'autre'
+export type MoyenPaiement = '' | 'especes' | 'cheque' | 'virement'
 export type StatutCordage = 'deposee' | 'cordee' | 'rendue'
 
 export interface Vente {

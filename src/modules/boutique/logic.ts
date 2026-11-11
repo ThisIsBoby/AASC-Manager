@@ -4,9 +4,6 @@ export const MOYENS: { v: Exclude<MoyenPaiement, ''>; label: string }[] = [
   { v: 'especes', label: 'Espèces' },
   { v: 'cheque', label: 'Chèque' },
   { v: 'virement', label: 'Virement' },
-  { v: 'cb', label: 'Carte bancaire' },
-  { v: 'helloasso', label: 'HelloAsso' },
-  { v: 'autre', label: 'Autre' },
 ]
 export const libelleMoyen = (m: MoyenPaiement | string) => MOYENS.find(x => x.v === m)?.label ?? ''
 

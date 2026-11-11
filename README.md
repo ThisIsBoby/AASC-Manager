@@ -84,7 +84,7 @@ et peut **sortir du stock** les quantités (lots les plus proches de la pérempt
   (lots non périmés les plus anciens d'abord). Un admin peut annuler une vente : le stock est remis dans les caisses d'origine.
 - **Cordage** : offres paramétrables (par défaut club 15 €, joueur 5 €, offert 0 €). L'offre club peut être liée à un produit
   « garniture » : 1 garniture sort du stock quand la raquette passe à *Cordée*.
-- **Paiements** : chaque vente / cordage est *payé* (espèces, chèque, virement, CB, HelloAsso, autre) ou *à payer* ;
+- **Paiements** : chaque vente / cordage est *payé* (espèces, chèque ou virement) ou *à payer* ;
   le reste dû apparaît sur la fiche adhérent et le tableau de bord.
 - **Import CSV des adhérents** (admin, *Adhérents › Import CSV*) : fichier avec une ligne d'en-tête, séparateur `;` ou `,`,
   UTF-8 ou Windows-1252 (Excel). Colonnes reconnues automatiquement (modifiables) : N° de licence, Nom, Prénom, Sexe,

@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { X, CheckCircle2, AlertTriangle } from 'lucide-react'
 
 const logoUrl = `${import.meta.env.BASE_URL}logo-aasc.png`
@@ -104,7 +105,8 @@ export function Modal({ open, onClose, title, children, wide }: {
     return () => window.removeEventListener('keydown', h)
   }, [open, onClose])
   if (!open) return null
-  return (
+  // Portail vers <body> : sinon une carte parente (backdrop-blur, animation…) emprisonne la fenêtre
+  return createPortal(
     <div className="no-print fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={onClose}>
       <div onClick={e => e.stopPropagation()}
         className={`card card-accent max-h-[92vh] w-full animate-rise overflow-y-auto rounded-b-none p-5 sm:rounded-2xl ${wide ? 'sm:max-w-2xl' : 'sm:max-w-md'}`}>
@@ -114,7 +116,8 @@ export function Modal({ open, onClose, title, children, wide }: {
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
