@@ -47,7 +47,8 @@ export function AdherentPicker({ value, onChange, autoFocus }: { value: string; 
           {resultats.length === 0 && <li className="px-3 py-2 text-sm text-slate-400">Aucun adhérent trouvé</li>}
           {resultats.map((a, i) => (
             <li key={a.id}>
-              <button type="button" onClick={() => choisir(a.id)} onMouseEnter={() => setFocus(i)}
+              {/* preventDefault au mousedown : le champ garde le focus, le clavier mobile ne se ferme pas avant le choix */}
+              <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => choisir(a.id)} onMouseEnter={() => setFocus(i)}
                 className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm ${i === focus ? 'bg-aasc-orange/20' : ''} ${!a.actif ? 'opacity-60' : ''}`}>
                 <span className="font-semibold">{nomComplet(a)}</span>
                 <span className="text-xs text-slate-500">{a.licence ?? ''}{a.categorie ? ` · ${a.categorie}` : ''}{!a.actif ? ' · ancien' : ''}</span>

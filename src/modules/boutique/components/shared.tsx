@@ -47,7 +47,7 @@ export function PaiementCell({ table, id, paye, moyen, montant, disabled }: {
         : <button type="button" disabled={disabled} onClick={() => setOpen(true)} className="chip bg-red-500/20 text-red-300 hover:bg-red-500/30">À payer</button>}
       <Modal open={open} onClose={() => setOpen(false)} title={paye ? 'Paiement' : `Encaisser ${fmtEuro(montant)}`}>
         <div className="space-y-4">
-          <Field label="Moyen de paiement"><ChoixMoyen value={m} onChange={setM} /></Field>
+          <Field label="Moyen de paiement" group><ChoixMoyen value={m} onChange={setM} /></Field>
           <button className="btn-primary w-full" disabled={maj.isPending} onClick={() => enregistrer(true)}>{paye ? 'Mettre à jour' : 'Marquer payé'}</button>
           {paye && <button className="btn-ghost w-full" disabled={maj.isPending} onClick={() => enregistrer(false)}>Remettre « à payer »</button>}
         </div>
@@ -96,7 +96,7 @@ export function VenteForm({ open, onClose, adherentId }: { open: boolean; onClos
   return (
     <Modal open={open} onClose={onClose} title="Nouvelle vente">
       <form onSubmit={submit} className="space-y-4">
-        <Field label="Adhérent"><AdherentPicker value={f.adherent} onChange={id => setF({ ...f, adherent: id })} autoFocus={!adherentId} /></Field>
+        <Field label="Adhérent" group><AdherentPicker value={f.adherent} onChange={id => setF({ ...f, adherent: id })} autoFocus={!adherentId} /></Field>
         <Field label="Article">
           <select className="input" required value={f.article} onChange={e => choisirArticle(e.target.value)}>
             <option value="">— Choisir —</option>
@@ -104,7 +104,7 @@ export function VenteForm({ open, onClose, adherentId }: { open: boolean; onClos
           </select>
         </Field>
         {vars.length > 1 && (
-          <Field label="Taille / variante">
+          <Field label="Taille / variante" group>
             <div className="flex flex-wrap gap-1.5">
               {vars.map(v => {
                 const s = stockVariante(v, stock)
@@ -176,8 +176,8 @@ export function CordageForm({ open, onClose, adherentId }: { open: boolean; onCl
   return (
     <Modal open={open} onClose={onClose} title="Nouveau cordage">
       <form onSubmit={submit} className="space-y-4">
-        <Field label="Adhérent"><AdherentPicker value={f.adherent} onChange={id => setF({ ...f, adherent: id })} autoFocus={!adherentId} /></Field>
-        <Field label="Offre">
+        <Field label="Adhérent" group><AdherentPicker value={f.adherent} onChange={id => setF({ ...f, adherent: id })} autoFocus={!adherentId} /></Field>
+        <Field label="Offre" group>
           <div className="grid gap-2 sm:grid-cols-3">
             {offres.map(o => (
               <button type="button" key={o.id} onClick={() => setF({ ...f, offre: o.id, prix: '' })}

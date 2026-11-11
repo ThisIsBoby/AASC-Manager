@@ -85,13 +85,19 @@ export function Badge({ tone = 'slate', children }: { tone?: 'slate' | 'orange' 
   return <span className={`chip ${map[tone]}`}>{children}</span>
 }
 
-export function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
+/**
+ * Champ de formulaire avec intitulé.
+ * `group` : à utiliser quand le contenu contient des boutons (choix, recherche, stepper…).
+ * Un <label> transmet sinon tout appui à son premier bouton (ex. le « × » qui efface l'adhérent choisi).
+ */
+export function Field({ label, children, hint, group }: { label: string; children: ReactNode; hint?: string; group?: boolean }) {
+  const Comp = group ? 'div' : 'label'
   return (
-    <label className="block">
+    <Comp className="block">
       <span className="label">{label}</span>
       {children}
       {hint && <span className="mt-1 block text-xs text-slate-500">{hint}</span>}
-    </label>
+    </Comp>
   )
 }
 

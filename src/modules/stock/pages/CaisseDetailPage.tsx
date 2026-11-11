@@ -135,7 +135,7 @@ function AddLotDialog({ open, caisseId, onClose }: { open: boolean; caisseId: st
             <AdminOnly><button type="button" className="btn-icon btn-ghost" title="Nouveau produit" onClick={() => setNewProduit(true)}><Plus size={16} /></button></AdminOnly>
           </div>
         </Field>
-        <Field label={`Quantité${unite ? ` (${unite})` : ''}`}>
+        <Field label={`Quantité${unite ? ` (${unite})` : ''}`} group>
           <Stepper value={f.quantite} onChange={v => setF({ ...f, quantite: v })} />
         </Field>
         <div className="grid grid-cols-2 gap-3">
