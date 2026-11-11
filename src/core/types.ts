@@ -53,6 +53,37 @@ export interface Tournoi {
   modele_id: string | null; statut: 'prepa' | 'termine'; created_at: string
 }
 
+export interface Adherent {
+  id: string; licence: string | null; nom: string; prenom: string; sexe: string
+  date_naissance: string | null; email: string; telephone: string; categorie: string
+  saison: string; actif: boolean; created_at: string; updated_at: string
+}
+
+export interface Article {
+  id: string; nom: string; categorie: string; description: string; prix: number; actif: boolean; ordre: number
+}
+export interface ArticleVariante {
+  id: string; article_id: string; libelle: string; produit_id: string | null; prix: number | null; actif: boolean; ordre: number
+}
+export interface OffreCordage { id: string; nom: string; prix: number; produit_id: string | null; actif: boolean; ordre: number }
+
+export type MoyenPaiement = '' | 'especes' | 'cheque' | 'virement' | 'cb' | 'helloasso' | 'autre'
+export type StatutCordage = 'deposee' | 'cordee' | 'rendue'
+
+export interface Vente {
+  id: string; adherent_id: string | null; variante_id: string | null; libelle: string
+  quantite: number; prix_unitaire: number; total: number
+  paye: boolean; moyen_paiement: MoyenPaiement; paye_le: string | null; note: string
+  annulee: boolean; user_id: string | null; created_at: string
+}
+export interface Cordage {
+  id: string; adherent_id: string | null; offre_id: string | null; offre_nom: string; prix: number
+  raquette: string; cordage_ref: string; tension: string; statut: StatutCordage
+  depose_le: string; corde_le: string | null; rendu_le: string | null; stock_sorti: boolean
+  paye: boolean; moyen_paiement: MoyenPaiement; paye_le: string | null; note: string
+  user_id: string | null; created_at: string
+}
+
 export interface ModeleChecklist { id: string; nom: string; description: string }
 export interface ModeleChecklistTache {
   id: string; modele_id: string; libelle: string; categorie: string; jours_avant: number | null; ordre: number
