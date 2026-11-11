@@ -101,6 +101,21 @@ export function Field({ label, children, hint, group }: { label: string; childre
   )
 }
 
+// Blocage du défilement de la page derrière les fenêtres (compteur : plusieurs fenêtres peuvent se superposer).
+// `position: fixed` sur <body> est nécessaire pour iOS Safari, qui ignore `overflow: hidden`.
+let verrous = 0
+let scrollAvant = 0
+function verrouillerScroll() {
+  if (verrous++ > 0) return
+  scrollAvant = window.scrollY
+  Object.assign(document.body.style, { position: 'fixed', top: `-${scrollAvant}px`, left: '0', right: '0', overflow: 'hidden' })
+}
+function deverrouillerScroll() {
+  if (--verrous > 0) return
+  Object.assign(document.body.style, { position: '', top: '', left: '', right: '', overflow: '' })
+  window.scrollTo(0, scrollAvant)
+}
+
 export function Modal({ open, onClose, title, children, wide }: {
   open: boolean; onClose: () => void; title: string; children: ReactNode; wide?: boolean
 }) {
@@ -110,12 +125,17 @@ export function Modal({ open, onClose, title, children, wide }: {
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
   }, [open, onClose])
+  useEffect(() => {
+    if (!open) return
+    verrouillerScroll()
+    return deverrouillerScroll
+  }, [open])
   if (!open) return null
   // Portail vers <body> : sinon une carte parente (backdrop-blur, animation…) emprisonne la fenêtre
   return createPortal(
     <div className="no-print fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={onClose}>
       <div onClick={e => e.stopPropagation()}
-        className={`card card-accent max-h-[92vh] w-full animate-rise overflow-y-auto rounded-b-none p-5 sm:rounded-2xl ${wide ? 'sm:max-w-2xl' : 'sm:max-w-md'}`}>
+        className={`card card-accent max-h-[92dvh] w-full animate-rise overflow-y-auto overscroll-contain rounded-b-none p-5 sm:rounded-2xl ${wide ? 'sm:max-w-2xl' : 'sm:max-w-md'}`}>
         <div className="mb-4 flex items-center justify-between gap-2">
           <h2 className="title-sport text-xl">{title}</h2>
           <button className="btn-icon btn-ghost" onClick={onClose} aria-label="Fermer"><X size={18} /></button>
