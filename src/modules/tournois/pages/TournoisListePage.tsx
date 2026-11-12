@@ -38,7 +38,7 @@ export function TournoisListePage() {
               <Link key={t.id} to={`/tournois/${t.id}`} className="card card-accent p-4 transition hover:-translate-y-0.5 hover:shadow-glow">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    {(t.type ?? 'tournoi') !== 'tournoi' && <Badge tone={couleurType(t.type)}>{libelleType(t.type)}</Badge>}
+                    <Badge tone={couleurType(t.type)}>{libelleType(t.type)}</Badge>
                     <p className="title-sport text-lg leading-tight">{t.nom}</p>
                   </div>
                   {rebours && <Badge tone={rebours === 'Passé' ? 'slate' : 'blue'}>{rebours}</Badge>}

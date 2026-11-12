@@ -2,7 +2,8 @@ import { Link } from 'react-router-dom'
 import { CalendarHeart, ShoppingCart } from 'lucide-react'
 import { useTournois } from '@/modules/stock/api'
 import { fmtDate } from '@/modules/stock/components/shared'
-import { libelleParticipants, libelleType } from '../logic'
+import { Badge } from '@/core/ui'
+import { couleurType, libelleParticipants, libelleType } from '../logic'
 
 /** Bloc « Événements » de l'accueil commun. */
 export function TournoisAccueil() {
@@ -17,7 +18,8 @@ export function TournoisAccueil() {
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {tournois.map(t => (
             <Link key={t.id} to={`/tournois/${t.id}`} className="rounded-xl border border-aasc-line p-3 transition hover:border-aasc-orange">
-              <p className="font-semibold">{(t.type ?? 'tournoi') !== 'tournoi' && <span className="mr-1 text-xs font-bold uppercase text-emerald-300">{libelleType(t.type)}</span>}{t.nom}</p>
+              <Badge tone={couleurType(t.type)}>{libelleType(t.type)}</Badge>
+              <p className="font-semibold">{t.nom}</p>
               <p className="text-xs text-slate-400">{fmtDate(t.date)} · {libelleParticipants(t.type, t.nb_joueurs)}</p>
             </Link>
           ))}
