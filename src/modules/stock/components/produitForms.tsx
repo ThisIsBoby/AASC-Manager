@@ -1,9 +1,9 @@
 import { useState, type FormEvent } from 'react'
-import { Plus, Ruler } from 'lucide-react'
+import { Plus, Ruler, Trash2 } from 'lucide-react'
 import { errMsg } from '@/core/supabase'
 import type { Produit } from '@/core/types'
 import { Field, Modal, fmtQ, useToast } from '@/core/ui'
-import { useCaisses, useCategories, useCreerLot, useEnregistrerProduits } from '../api'
+import { useCaisses, useCategories, useCreerLot, useEnregistrerProduits, useStockProduits, useSupprimerProduits } from '../api'
 import { designationTaille, parseTailles, prixGroupe, type GroupeProduits } from '../logic'
 
 const prixVersTexte = (p: number | null | undefined) => (p == null ? '' : String(p))
@@ -26,6 +26,32 @@ function ChampCategorie({ value, onChange }: { value: string | null | undefined;
         {categories.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
       </select>
     </Field>
+  )
+}
+
+// ---------------------------------------------------------------------
+// Suppression : seulement sans stock ; l'historique est conservé
+// ---------------------------------------------------------------------
+function BoutonSupprimer({ produits, libelle, onDone }: { produits: Pick<Produit, 'id' | 'designation'>[]; libelle: string; onDone: () => void }) {
+  const stock = useStockProduits().data ?? []
+  const supprimer = useSupprimerProduits()
+  const toast = useToast()
+
+  async function go() {
+    const ids = new Set(produits.map(p => p.id))
+    const avecLots = stock.filter(s => ids.has(s.id) && s.nb_lots > 0)
+    if (avecLots.length) {
+      return toast(`Impossible : il reste du stock (${avecLots.map(s => `${s.designation} : ${fmtQ(s.stock_valide + s.stock_perime)}`).join(', ')}). Sortez-le d'abord, ou décochez « actif » pour masquer le produit.`, 'err')
+    }
+    if (!confirm(`Supprimer définitivement ${libelle} ?\n\nL'historique et les ventes passées sont conservés. Le produit est aussi retiré des modèles de tournoi.`)) return
+    try { await supprimer.mutateAsync([...ids]); toast('Produit supprimé'); onDone() }
+    catch (err) { toast(errMsg(err), 'err') }
+  }
+
+  return (
+    <button type="button" className="btn-ghost w-full text-sm text-red-300" disabled={supprimer.isPending} onClick={go}>
+      <Trash2 size={14} /> Supprimer {libelle}
+    </button>
   )
 }
 
@@ -118,6 +144,7 @@ export function ProduitForm({ value, onClose, onSaved, onTailles }: {
             <Ruler size={14} /> Décliner en tailles
           </button>
         )}
+        {f.id && <BoutonSupprimer produits={[{ id: f.id, designation: f.designation ?? '' }]} libelle={estTaille ? `la taille ${f.taille}` : 'ce produit'} onDone={onClose} />}
       </form>
     </Modal>
   )
@@ -163,6 +190,7 @@ export function ModeleForm({ value, onClose, onTailles }: {
         <button type="button" className="btn-ghost w-full text-sm" onClick={() => { const g = value; onClose(); if (g) onTailles(g) }}>
           <Plus size={14} /> Ajouter des tailles
         </button>
+        {value && <BoutonSupprimer produits={value.produits} libelle={`« ${value.nom} » et ses ${value.produits.length} tailles`} onDone={onClose} />}
       </form>
     </Modal>
   )

@@ -119,6 +119,15 @@ export function useEnregistrerProduits() {
   })
 }
 
+/** Supprime des produits (refusé par la base s'il leur reste des lots) */
+export function useSupprimerProduits() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (ids: string[]) => q(supabase.from('produits').delete().in('id', ids)),
+    onSuccess: () => Promise.all(['produits', 'stock', 'modele_lignes'].map(k => qc.invalidateQueries({ queryKey: [k] }))),
+  })
+}
+
 export function useCreerLot() {
   const inv = useInvalidateStock()
   return useMutation({
