@@ -1,5 +1,5 @@
 import { Navigate, useParams } from 'react-router-dom'
-import { ScanLine, Boxes, Package, History, ShoppingCart, QrCode } from 'lucide-react'
+import { ScanLine, Boxes, Package, History, ShoppingCart, QrCode, ClipboardCheck } from 'lucide-react'
 import type { AppModule } from '@/core/modules'
 import { StockAccueil } from './components/StockAccueil'
 import { ScannerPage } from './pages/ScannerPage'
@@ -9,6 +9,9 @@ import { ProduitsPage } from './pages/ProduitsPage'
 import { HistoriquePage } from './pages/HistoriquePage'
 import { AchatsPage } from './pages/AchatsPage'
 import { EtiquettesPage } from './pages/EtiquettesPage'
+import { InventairesPage } from './pages/InventairesPage'
+import { InventaireDetailPage } from './pages/InventaireDetailPage'
+import { InventaireComptagePage } from './pages/InventaireComptagePage'
 
 export const stockModule: AppModule = {
   id: 'stock',
@@ -17,12 +20,14 @@ export const stockModule: AppModule = {
     { to: '/stock/scanner', label: 'Scanner', icon: ScanLine },
     { to: '/stock/caisses', label: 'Caisses', icon: Boxes },
     { to: '/stock/produits', label: 'Produits', icon: Package },
+    { to: '/stock/inventaires', label: 'Inventaire', icon: ClipboardCheck },
     { to: '/stock/achats', label: 'Achats à faire', icon: ShoppingCart },
     { to: '/stock/historique', label: 'Historique', icon: History },
     { to: '/stock/etiquettes', label: 'Étiquettes QR', icon: QrCode },
   ],
   quickActions: [
-    { id: 'scanner', label: 'Scanner une caisse', hint: 'Entrée, sortie, inventaire', icon: ScanLine, to: '/stock/scanner' },
+    { id: 'scanner', label: 'Scanner une caisse', hint: 'Entrée, sortie, transfert', icon: ScanLine, to: '/stock/scanner' },
+    { id: 'inventaire', label: 'Faire l\'inventaire', hint: 'Compter les caisses, voir les écarts', icon: ClipboardCheck, to: '/stock/inventaires' },
   ],
   Accueil: StockAccueil,
   routes: [
@@ -38,6 +43,9 @@ export const stockModule: AppModule = {
     { path: 'stock/tournois/:id', element: <RedirectTournoi /> },
     { path: 'stock/achats', element: <AchatsPage /> },
     { path: 'stock/etiquettes', element: <EtiquettesPage /> },
+    { path: 'stock/inventaires', element: <InventairesPage /> },
+    { path: 'stock/inventaire/:id', element: <InventaireDetailPage /> },
+    { path: 'stock/inventaire/:id/caisse/:caisseId', element: <InventaireComptagePage /> },
   ],
 }
 

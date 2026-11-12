@@ -1,15 +1,20 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Scanner, type IDetectedBarcode } from '@yudiel/react-qr-scanner'
-import { CameraOff, Search } from 'lucide-react'
+import { CameraOff, ClipboardCheck, Search, X } from 'lucide-react'
 import { PageHeader, useToast } from '@/core/ui'
-import { useCaisses } from '../api'
+import { useCaisses, useInventaire } from '../api'
 import { parseScan } from '../logic'
 
 export function ScannerPage() {
   const nav = useNavigate()
   const toast = useToast()
   const caisses = useCaisses().data ?? []
+  // Mode inventaire : le scan ouvre le comptage de la caisse au lieu de sa fiche
+  const [sp] = useSearchParams()
+  const inventaireId = sp.get('inventaire') ?? undefined
+  const inventaire = useInventaire(inventaireId).data
+  const modeInventaire = inventaire?.statut === 'en_cours'
   const [flash, setFlash] = useState(false)
   const [camError, setCamError] = useState<string | null>(null)
   const [code, setCode] = useState('')
@@ -20,7 +25,7 @@ export function ScannerPage() {
     if (!caisse) { toast(`Caisse introuvable : ${text.slice(0, 60)}`, 'err'); return false }
     setFlash(true)
     if (navigator.vibrate) navigator.vibrate(80)
-    setTimeout(() => nav(`/stock/caisse/${caisse.id}`), 250)
+    setTimeout(() => nav(modeInventaire ? `/stock/inventaire/${inventaire.id}/caisse/${caisse.id}` : `/stock/caisse/${caisse.id}`), 250)
     return true
   }
 
@@ -33,8 +38,18 @@ export function ScannerPage() {
 
   return (
     <div>
-      <PageHeader kicker="Stock" title="Scanner" />
+      <PageHeader kicker={modeInventaire ? 'Inventaire' : 'Stock'} title="Scanner" />
       <div className="mx-auto max-w-md">
+        {modeInventaire && (
+          <div className="card mb-4 flex items-center gap-3 border-aasc-orange/60 p-3">
+            <ClipboardCheck size={20} className="shrink-0 text-aasc-orange" />
+            <Link to={`/stock/inventaire/${inventaire.id}`} className="min-w-0 flex-1">
+              <span className="block text-xs uppercase tracking-wider text-slate-400">Inventaire en cours</span>
+              <span className="block truncate font-semibold">{inventaire.nom}</span>
+            </Link>
+            <Link to="/stock/scanner" className="btn-icon btn-ghost" title="Quitter le mode inventaire"><X size={16} /></Link>
+          </div>
+        )}
         <div className={`card relative aspect-square overflow-hidden p-0 ${flash ? 'animate-flash border-aasc-orange' : ''}`}>
           {camError ? (
             <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center text-slate-400">

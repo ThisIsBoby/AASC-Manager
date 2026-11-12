@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/core/supabase'
 import type {
-  Caisse, Categorie, Lot, ModeleLigne, ModeleTournoi, Mouvement, Peremption, Produit, Profile,
+  Caisse, Categorie, Inventaire, InventaireCaisse, InventaireLigne, Lot, ModeleLigne, ModeleTournoi, Mouvement, Peremption, Produit, Profile,
   StockProduit, Tournoi, TypeMouvement,
 } from '@/core/types'
 
@@ -75,7 +75,7 @@ export const useTournois = () =>
 /** Invalide tout ce qui dépend du stock */
 function useInvalidateStock() {
   const qc = useQueryClient()
-  return () => Promise.all(['lots', 'stock', 'peremptions', 'mouvements', 'tournois'].map(k => qc.invalidateQueries({ queryKey: [k] })))
+  return () => Promise.all(['lots', 'stock', 'peremptions', 'mouvements', 'tournois', 'inventaires'].map(k => qc.invalidateQueries({ queryKey: [k] })))
 }
 
 export function useUpsert<T extends { id?: string }>(table: string, keys: string[]) {
@@ -184,5 +184,93 @@ export function useSaveModeleLignes() {
       if (lignes.length) await q(supabase.from('modeles_tournoi_lignes').insert(lignes.map(l => ({ ...l, modele_id: modeleId }))))
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['modele_lignes'] }),
+  })
+}
+
+// ---------------- Inventaires ----------------
+export const useInventaires = () =>
+  useQuery({ queryKey: ['inventaires', 'liste'], queryFn: () => q<Inventaire[]>(supabase.from('inventaires').select('*').order('created_at', { ascending: false })) })
+
+export const useInventaire = (id: string | undefined) =>
+  useQuery({
+    queryKey: ['inventaires', 'un', id], enabled: !!id,
+    queryFn: () => q<Inventaire | null>(supabase.from('inventaires').select('*').eq('id', id!).maybeSingle()),
+  })
+
+/** Caisses d'un inventaire (ou de tous les inventaires si id absent) */
+export const useInventaireCaisses = (inventaireId?: string) =>
+  useQuery({
+    queryKey: ['inventaires', 'caisses', inventaireId ?? 'tous'],
+    queryFn: () => {
+      let r = supabase.from('inventaire_caisses').select('*')
+      if (inventaireId) r = r.eq('inventaire_id', inventaireId)
+      return q<InventaireCaisse[]>(r)
+    },
+  })
+
+/** Lignes de comptage de toutes les caisses d'un inventaire */
+export const useInventaireLignes = (inventaireId: string | undefined) =>
+  useQuery({
+    queryKey: ['inventaires', 'lignes', inventaireId], enabled: !!inventaireId,
+    queryFn: () => q<InventaireLigne[]>(supabase.from('inventaire_lignes')
+      .select('*, inventaire_caisses!inner(inventaire_id)')
+      .eq('inventaire_caisses.inventaire_id', inventaireId!)),
+  })
+
+function useInvalidateInventaires() {
+  const qc = useQueryClient()
+  return () => qc.invalidateQueries({ queryKey: ['inventaires'] })
+}
+
+export function useCreerInventaire() {
+  const inv = useInvalidateInventaires()
+  return useMutation({
+    mutationFn: (p: { nom: string; caisses: string[] | null }) =>
+      q<string>(supabase.rpc('creer_inventaire', { p_nom: p.nom, p_caisses: p.caisses })),
+    onSuccess: inv,
+  })
+}
+
+export function useAjouterCaisseInventaire() {
+  const inv = useInvalidateInventaires()
+  return useMutation({
+    mutationFn: (p: { inventaire: string; caisse: string }) =>
+      q<string>(supabase.rpc('ajouter_caisse_inventaire', { p_inventaire: p.inventaire, p_caisse: p.caisse })),
+    onSuccess: inv,
+  })
+}
+
+export interface LigneComptage {
+  lot_id: string | null
+  produit_id: string
+  qte_comptee: number | null
+  date_peremption?: string | null
+  note?: string
+}
+
+/** Enregistre le comptage d'une caisse ; renvoie le nouveau statut (en_cours | compte) */
+export function useEnregistrerComptage() {
+  const inv = useInvalidateInventaires()
+  return useMutation({
+    mutationFn: (p: { invCaisse: string; lignes: LigneComptage[] }) =>
+      q<'en_cours' | 'compte'>(supabase.rpc('enregistrer_comptage', { p_inv_caisse: p.invCaisse, p_lignes: p.lignes })),
+    onSuccess: inv,
+  })
+}
+
+/** Valide une caisse : applique les écarts au stock ; renvoie le nombre d'ajustements */
+export function useValiderComptage() {
+  const inv = useInvalidateStock()
+  return useMutation({
+    mutationFn: (invCaisse: string) => q<number>(supabase.rpc('valider_comptage', { p_inv_caisse: invCaisse })),
+    onSuccess: inv,
+  })
+}
+
+export function useCloturerInventaire() {
+  const inv = useInvalidateInventaires()
+  return useMutation({
+    mutationFn: (id: string) => q(supabase.rpc('cloturer_inventaire', { p_inventaire: id })),
+    onSuccess: inv,
   })
 }
