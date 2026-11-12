@@ -86,7 +86,7 @@ export function VenteForm({ open, onClose, adherentId }: { open: boolean; onClos
   async function submit(e: FormEvent) {
     e.preventDefault()
     if (!f.adherent) return toast('Choisissez un adhérent', 'err')
-    if (!produit) return toast('Choisissez une taille', 'err')
+    if (!produit) return toast('Choisissez une variante', 'err')
     try {
       await vendre.mutateAsync({ adherent: f.adherent, produit: produit.id, quantite: Number(f.quantite), prix, paye: f.paye, moyen: f.paye ? f.moyen : '', note: f.note })
       toast('Vente enregistrée'); onClose()
@@ -104,7 +104,7 @@ export function VenteForm({ open, onClose, adherentId }: { open: boolean; onClos
           </select>
         </Field>
         {groupe?.modele && (
-          <Field label="Taille" group>
+          <Field label="Variante" group>
             <div className="flex flex-wrap gap-1.5">
               {tailles.map(p => {
                 const s = Number(p.stock_valide)

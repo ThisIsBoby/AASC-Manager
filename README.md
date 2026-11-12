@@ -78,10 +78,10 @@ et peut **sortir du stock** les quantités (lots les plus proches de la pérempt
 
 ## Boutique, cordage et adhérents
 - **Une seule base : Stock › Produits.** Stock, seuil, prix de vente et tailles se gèrent au même endroit.
-  Un produit qui a un **prix de vente** est proposé à la vente (vide = pas vendu). Un produit peut exister en **tailles**
-  (ex. « Maillot club » XS…XL) : chaque taille a son propre stock et son seuil, le nom, la catégorie et le prix sont communs.
+  Un produit qui a un **prix de vente** est proposé à la vente (vide = pas vendu). Un produit peut exister en **variantes** (tailles, parfums, couleurs…)
+  (ex. « Maillot club » XS…XL, « Barres de céréales » Lion, Snickers…) : chaque variante a son propre stock et son seuil, le nom, la catégorie et le prix sont communs.
   Pour un stock « hors caisse » (réserve de tubes), créez une caisse dédiée, ex. *Réserve boutique*.
-- **Vente** : adhérent → produit → taille → quantité ; le prix est pré-rempli (modifiable), la quantité sort du stock
+- **Vente** : adhérent → produit → variante → quantité ; le prix est pré-rempli (modifiable), la quantité sort du stock
   (lots non périmés les plus anciens d'abord). Un admin peut annuler une vente : le stock est remis dans les caisses d'origine.
 - **Cordage** : offres paramétrables dans *Cordages › Offres* (par défaut club 15 €, joueur 5 €, offert 0 €). L'offre club peut être liée à un produit
   « garniture » : 1 garniture sort du stock quand la raquette passe à *Cordée*.

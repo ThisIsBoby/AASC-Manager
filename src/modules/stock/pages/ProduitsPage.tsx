@@ -75,7 +75,7 @@ export function ProduitsPage() {
       <PageHeader kicker="Stock" title="Produits"
         actions={<AdminOnly><button className="btn-primary" onClick={() => setEdit({ actif: true, unite: 'unité', seuil_min: 0 })}><Plus size={18} /> Nouveau produit</button></AdminOnly>} />
       <p className="mb-4 text-sm text-slate-400">
-        Tout se gère ici : stock, seuil d'alerte, prix de vente et tailles. Un produit qui a un prix de vente est proposé dans
+        Tout se gère ici : stock, seuil d'alerte, prix de vente et variantes (tailles, parfums…). Un produit qui a un prix de vente est proposé dans
         {' '}<Link to="/boutique/ventes" className="text-aasc-orange-soft underline">Ventes</Link>.
       </p>
       <div className="mb-4 flex flex-wrap gap-2">
@@ -111,14 +111,14 @@ export function ProduitsPage() {
                     <tr className="bg-white/[0.03]">
                       <td>
                         <p className="font-semibold">{g.nom} {prix != null && <Badge tone="orange">{fmtEuro(prix)}</Badge>}</p>
-                        <p className="text-xs text-slate-500">{g.produits.length} taille(s){nbBas > 0 && <span className="text-red-300"> · {nbBas} sous le seuil</span>}</p>
+                        <p className="text-xs text-slate-500">{g.produits.length} variante(s){nbBas > 0 && <span className="text-red-300"> · {nbBas} sous le seuil</span>}</p>
                       </td>
                       <td className="hidden sm:table-cell"><CategorieTag cat={p0.categorie_id ? refs.categorie.get(p0.categorie_id) : null} /></td>
                       <td className="text-right"><span className="tabular-nums text-slate-300">{fmtQ(total)}</span><span className="ml-1 text-xs text-slate-500">au total</span></td>
                       <td />
                       <td className="hidden text-slate-400 md:table-cell">{fmtDate(per)}</td>
                       <td className="whitespace-nowrap text-right">
-                        {isAdmin && <button className="btn-icon btn-ghost" title="Nom, catégorie, prix, tailles" onClick={() => setEditModele(versProduits(g))}><Pencil size={14} /></button>}
+                        {isAdmin && <button className="btn-icon btn-ghost" title="Nom, catégorie, prix, variantes" onClick={() => setEditModele(versProduits(g))}><Pencil size={14} /></button>}
                       </td>
                     </tr>
                     {g.produits.map(p => ligneProduit(p, g))}
