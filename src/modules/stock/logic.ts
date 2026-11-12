@@ -1,4 +1,4 @@
-import type { ModeleLigne, Produit, StockProduit, Tournoi } from '@/core/types'
+import type { InventaireCaisse, InventaireLigne, ModeleLigne, Produit, StockProduit, Tournoi } from '@/core/types'
 
 /** Besoin d'un produit pour un tournoi : quantité fixe + arrondi supérieur (par joueur × nb joueurs) */
 export function besoinLigne(qteParJoueur: number, qteFixe: number, nbJoueurs: number): number {
@@ -138,3 +138,69 @@ export function prixGroupe(produits: Pick<Produit, 'prix_vente' | 'actif'>[]): n
 
 export const estStockBas = (p: Pick<StockProduit, 'seuil_min' | 'stock_valide'>) =>
   Number(p.seuil_min) > 0 && Number(p.stock_valide) < Number(p.seuil_min)
+
+// ---------------------------------------------------------------------
+// Inventaire : écarts entre stock théorique et stock compté
+// ---------------------------------------------------------------------
+export type EtatEcart = 'conforme' | 'manquant' | 'surplus' | 'absent' | 'nouveau' | 'non_compte'
+
+type LigneEcart = Pick<InventaireLigne, 'nouveau' | 'qte_theorique' | 'qte_comptee' | 'qte_avant'>
+
+/** Quantité de référence : réelle à la validation si connue, sinon théorique au comptage */
+export const qteReference = (l: Pick<InventaireLigne, 'qte_theorique' | 'qte_avant'>) =>
+  Number(l.qte_avant ?? l.qte_theorique) || 0
+
+/** Écart compté − référence, et classification de la ligne */
+export function ecartLigne(l: LigneEcart): { reference: number; ecart: number; etat: EtatEcart } {
+  const reference = qteReference(l)
+  if (l.qte_comptee == null) return { reference, ecart: 0, etat: 'non_compte' }
+  const compte = Number(l.qte_comptee)
+  const ecart = round6(compte - reference)
+  if (l.nouveau) return { reference, ecart, etat: compte > 0 ? 'nouveau' : 'conforme' }
+  if (ecart === 0) return { reference, ecart, etat: 'conforme' }
+  if (compte === 0) return { reference, ecart, etat: 'absent' }
+  return { reference, ecart, etat: ecart < 0 ? 'manquant' : 'surplus' }
+}
+
+export const estEcart = (e: EtatEcart) => e !== 'conforme' && e !== 'non_compte'
+
+export interface EcartProduit { produitId: string; reference: number; compte: number; ecart: number }
+
+export interface ResumeInventaire {
+  total: number
+  aFaire: number
+  enCours: number
+  aValider: number
+  valides: number
+  /** caisses dont le comptage est complet (comptées ou validées) */
+  faites: number
+  lignesEnEcart: number
+  /** écarts cumulés par produit (lignes comptées uniquement), triés par écart absolu décroissant */
+  parProduit: EcartProduit[]
+}
+
+export function resumeInventaire(
+  caisses: Pick<InventaireCaisse, 'id' | 'statut'>[],
+  lignes: (LigneEcart & Pick<InventaireLigne, 'inventaire_caisse_id' | 'produit_id'>)[],
+): ResumeInventaire {
+  const n = (s: InventaireCaisse['statut']) => caisses.filter(c => c.statut === s).length
+  const ids = new Set(caisses.map(c => c.id))
+  const parProduit = new Map<string, EcartProduit>()
+  let lignesEnEcart = 0
+  for (const l of lignes) {
+    if (!ids.has(l.inventaire_caisse_id) || l.qte_comptee == null) continue
+    const e = ecartLigne(l)
+    if (estEcart(e.etat)) lignesEnEcart++
+    const p = parProduit.get(l.produit_id) ?? { produitId: l.produit_id, reference: 0, compte: 0, ecart: 0 }
+    p.reference = round6(p.reference + e.reference)
+    p.compte = round6(p.compte + Number(l.qte_comptee))
+    p.ecart = round6(p.compte - p.reference)
+    parProduit.set(l.produit_id, p)
+  }
+  const aValider = n('compte'), valides = n('valide')
+  return {
+    total: caisses.length, aFaire: n('a_faire'), enCours: n('en_cours'), aValider, valides,
+    faites: aValider + valides, lignesEnEcart,
+    parProduit: [...parProduit.values()].sort((a, b) => Math.abs(b.ecart) - Math.abs(a.ecart)),
+  }
+}

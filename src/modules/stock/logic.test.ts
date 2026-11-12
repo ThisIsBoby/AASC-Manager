@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { besoinLigne, calculAchats, calculPreparation, designationTaille, estStockBas, estVendu, etatPeremption, grouperProduits, parseScan, parseTailles, prixGroupe } from './logic'
+import { besoinLigne, calculAchats, calculPreparation, designationTaille, ecartLigne, estStockBas, estVendu, etatPeremption, grouperProduits, parseScan, parseTailles, prixGroupe, resumeInventaire } from './logic'
 import type { ModeleLigne, StockProduit, Tournoi } from '@/core/types'
 
 const ligne = (produit_id: string, qte_par_joueur: number, qte_fixe: number, modele_id = 'm1'): ModeleLigne =>
@@ -104,5 +104,47 @@ describe('catalogue', () => {
     expect(prixGroupe([{ prix_vente: null, actif: true }])).toBeNull()
     expect(estStockBas({ seuil_min: 5, stock_valide: 2 })).toBe(true)
     expect(estStockBas({ seuil_min: 0, stock_valide: 0 })).toBe(false)
+  })
+})
+
+const li = (o: Partial<{ nouveau: boolean; qte_theorique: number; qte_comptee: number | null; qte_avant: number | null; produit_id: string; inventaire_caisse_id: string }>) =>
+  ({ nouveau: false, qte_theorique: 0, qte_comptee: null, qte_avant: null, produit_id: 'p', inventaire_caisse_id: 'ic1', ...o })
+
+describe('ecartLigne', () => {
+  it('classe les lignes', () => {
+    expect(ecartLigne(li({ qte_theorique: 5, qte_comptee: 5 })).etat).toBe('conforme')
+    expect(ecartLigne(li({ qte_theorique: 5, qte_comptee: 3 }))).toEqual({ reference: 5, ecart: -2, etat: 'manquant' })
+    expect(ecartLigne(li({ qte_theorique: 5, qte_comptee: 7 })).etat).toBe('surplus')
+    expect(ecartLigne(li({ qte_theorique: 5, qte_comptee: 0 })).etat).toBe('absent')
+    expect(ecartLigne(li({ nouveau: true, qte_comptee: 2 }))).toEqual({ reference: 0, ecart: 2, etat: 'nouveau' })
+    expect(ecartLigne(li({ qte_theorique: 5 })).etat).toBe('non_compte')
+  })
+  it('compare à la quantité réelle à la validation si elle est connue', () => {
+    expect(ecartLigne(li({ qte_theorique: 10, qte_avant: 9, qte_comptee: 8 })).ecart).toBe(-1)
+    expect(ecartLigne(li({ qte_theorique: 10, qte_avant: 8, qte_comptee: 8 })).etat).toBe('conforme')
+  })
+  it('évite les erreurs d’arrondi', () => {
+    expect(ecartLigne(li({ qte_theorique: 0.3, qte_comptee: 0.1 })).ecart).toBe(-0.2)
+  })
+})
+
+describe('resumeInventaire', () => {
+  const caisses = [
+    { id: 'ic1', statut: 'valide' as const }, { id: 'ic2', statut: 'compte' as const },
+    { id: 'ic3', statut: 'en_cours' as const }, { id: 'ic4', statut: 'a_faire' as const },
+  ]
+  it('compte l’avancement et consolide les écarts par produit', () => {
+    const r = resumeInventaire(caisses, [
+      li({ inventaire_caisse_id: 'ic1', produit_id: 'a', qte_theorique: 10, qte_comptee: 8 }),
+      li({ inventaire_caisse_id: 'ic2', produit_id: 'a', qte_theorique: 4, qte_comptee: 5 }),
+      li({ inventaire_caisse_id: 'ic2', produit_id: 'b', qte_theorique: 3, qte_comptee: 3 }),
+      li({ inventaire_caisse_id: 'ic3', produit_id: 'b', qte_theorique: 3, qte_comptee: null }),
+      li({ inventaire_caisse_id: 'autre', produit_id: 'c', qte_theorique: 1, qte_comptee: 0 }),
+    ])
+    expect(r).toMatchObject({ total: 4, aFaire: 1, enCours: 1, aValider: 1, valides: 1, faites: 2, lignesEnEcart: 2 })
+    expect(r.parProduit).toEqual([
+      { produitId: 'a', reference: 14, compte: 13, ecart: -1 },
+      { produitId: 'b', reference: 3, compte: 3, ecart: 0 },
+    ])
   })
 })

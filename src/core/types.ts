@@ -37,6 +37,32 @@ export interface Mouvement {
   id: string; lot_id: string | null; produit_id: string | null; caisse_id: string | null
   caisse_dest_id: string | null; type: TypeMouvement; quantite: number; quantite_apres: number | null
   motif: string; tournoi_id: string | null; user_id: string | null; created_at: string
+  inventaire_id?: string | null
+}
+
+export type StatutInventaire = 'en_cours' | 'cloture'
+export interface Inventaire {
+  id: string; nom: string; statut: StatutInventaire; note: string
+  created_by: string | null; created_at: string; cloture_le: string | null
+}
+
+/** a_faire → en_cours (comptage incomplet) → compte (à valider) → valide (écarts appliqués) */
+export type StatutCaisseInventaire = 'a_faire' | 'en_cours' | 'compte' | 'valide'
+export interface InventaireCaisse {
+  id: string; inventaire_id: string; caisse_id: string; statut: StatutCaisseInventaire
+  compte_par: string | null; compte_le: string | null; valide_par: string | null; valide_le: string | null
+}
+
+export interface InventaireLigne {
+  id: string; inventaire_caisse_id: string; lot_id: string | null; produit_id: string
+  /** élément trouvé en plus (absent du stock théorique) */
+  nouveau: boolean
+  qte_theorique: number
+  /** null = pas encore compté */
+  qte_comptee: number | null
+  /** quantité réelle au moment de la validation */
+  qte_avant: number | null
+  date_peremption: string | null; note: string
 }
 
 export interface StockProduit {
