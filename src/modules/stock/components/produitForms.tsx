@@ -1,9 +1,10 @@
 import { useState, type FormEvent } from 'react'
 import { Plus, Ruler, Trash2 } from 'lucide-react'
 import { errMsg } from '@/core/supabase'
-import type { Produit } from '@/core/types'
+import type { Categorie, Produit } from '@/core/types'
+import { useAuth } from '@/core/auth/AuthProvider'
 import { Field, Modal, fmtQ, useToast } from '@/core/ui'
-import { useCaisses, useCategories, useCreerLot, useEnregistrerProduits, useStockProduits, useSupprimerProduits } from '../api'
+import { useCaisses, useCategories, useCreerLot, useEnregistrerProduits, useStockProduits, useSupprimerProduits, useUpsert } from '../api'
 import { designationTaille, parseTailles, prixGroupe, type GroupeProduits } from '../logic'
 
 const prixVersTexte = (p: number | null | undefined) => (p == null ? '' : String(p))
@@ -19,13 +20,61 @@ function ChampPrix({ value, onChange, hint }: { value: string; onChange: (v: str
 
 function ChampCategorie({ value, onChange }: { value: string | null | undefined; onChange: (v: string) => void }) {
   const categories = useCategories().data ?? []
+  const { isAdmin } = useAuth()
+  const [nouvelle, setNouvelle] = useState(false)
   return (
     <Field label="Catégorie">
-      <select className="input" value={value ?? ''} onChange={e => onChange(e.target.value)}>
-        <option value="">—</option>
-        {categories.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
-      </select>
+      <div className="flex gap-2">
+        <select className="input" value={value ?? ''} onChange={e => onChange(e.target.value)}>
+          <option value="">—</option>
+          {categories.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
+        </select>
+        {isAdmin && <button type="button" className="btn-ghost shrink-0" title="Nouvelle catégorie" onClick={() => setNouvelle(true)}><Plus size={16} /></button>}
+      </div>
+      <CategorieForm open={nouvelle} ordre={Math.max(0, ...categories.map(c => c.ordre)) + 1}
+        onClose={() => setNouvelle(false)} onSaved={id => onChange(id)} />
     </Field>
+  )
+}
+
+const COULEURS = ['#EE7D1F', '#2E7BC4', '#22C55E', '#A855F7', '#EF4444', '#EAB308', '#14B8A6', '#EC4899', '#94A3B8']
+
+/** Création rapide d'une catégorie (admin) */
+function CategorieForm({ open, ordre, onClose, onSaved }: { open: boolean; ordre: number; onClose: () => void; onSaved: (id: string) => void }) {
+  const upsert = useUpsert<Categorie>('categories', ['categories'])
+  const toast = useToast()
+  const [nom, setNom] = useState('')
+  const [couleur, setCouleur] = useState(COULEURS[0])
+  const [wasOpen, setWasOpen] = useState(false)
+  if (open !== wasOpen) { setWasOpen(open); if (open) { setNom(''); setCouleur(COULEURS[0]) } }
+
+  async function submit(e: FormEvent) {
+    e.preventDefault()
+    e.stopPropagation() // ne pas soumettre le formulaire produit derrière
+    try {
+      const row = await upsert.mutateAsync({ nom: nom.trim(), couleur, icone: 'package', ordre }) as Categorie
+      toast('Catégorie créée'); onSaved(row.id); onClose()
+    } catch (err) {
+      const m = errMsg(err)
+      toast(m.includes('duplicate') || m.includes('unique') ? 'Cette catégorie existe déjà' : m, 'err')
+    }
+  }
+
+  return (
+    <Modal open={open} onClose={onClose} title="Nouvelle catégorie">
+      <form onSubmit={submit} className="space-y-4">
+        <Field label="Nom"><input className="input" required autoFocus value={nom} onChange={e => setNom(e.target.value)} placeholder="ex. Snacks, Textile, Cordages" /></Field>
+        <Field label="Couleur" group>
+          <div className="flex flex-wrap gap-2">
+            {COULEURS.map(c => (
+              <button type="button" key={c} onClick={() => setCouleur(c)} aria-label={c}
+                className={`h-8 w-8 rounded-full border-2 ${couleur === c ? 'border-white' : 'border-transparent'}`} style={{ background: c }} />
+            ))}
+          </div>
+        </Field>
+        <button className="btn-primary w-full" disabled={upsert.isPending}>Créer la catégorie</button>
+      </form>
+    </Modal>
   )
 }
 
