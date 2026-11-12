@@ -4,13 +4,14 @@ import { Plus } from 'lucide-react'
 import { EmptyState, PageHeader, Spinner, StatTile } from '@/core/ui'
 import { useProduits } from '@/modules/stock/api'
 import { cleGroupe, grouperProduits } from '@/modules/stock/logic'
-import { useVentes } from '../api'
+import { useCordages, useVentes } from '../api'
 import { VenteForm } from '../components/shared'
-import { VentesTable } from '../components/tables'
-import { fmtEuro, venteDue } from '../logic'
+import { CordagesTable, VentesTable } from '../components/tables'
+import { cordageDu, fmtEuro, venteDue } from '../logic'
 
 export function VentesPage() {
   const ventes = useVentes()
+  const cordages = useCordages()
   const produitsList = useProduits().data
   // Filtre « article » : tous les produits ayant déjà un prix de vente (tailles regroupées)
   const produits = useMemo(() => new Map((produitsList ?? []).map(p => [p.id, p])), [produitsList])
@@ -28,7 +29,11 @@ export function VentesPage() {
     (!depuis || v.created_at >= depuis))
   const actives = list.filter(v => !v.annulee)
   const ca = actives.reduce((s, v) => s + Number(v.total), 0)
-  const du = actives.reduce((s, v) => s + venteDue(v), 0)
+  // Cordages restant à payer : affichés ici pour que « À encaisser » corresponde aux impayés de l'accueil
+  const cordagesDus = paye === 'oui' || article ? [] : (cordages.data ?? []).filter(c =>
+    cordageDu(c) > 0 && (!depuis || c.created_at >= depuis))
+  const duCordages = cordagesDus.reduce((s, c) => s + cordageDu(c), 0)
+  const du = actives.reduce((s, v) => s + venteDue(v), 0) + duCordages
 
   return (
     <div>
@@ -54,6 +59,12 @@ export function VentesPage() {
         <StatTile label="À encaisser" value={fmtEuro(du)} tone={du > 0 ? 'red' : 'green'} />
       </div>
       {ventes.isLoading ? <Spinner /> : list.length ? <VentesTable ventes={list} /> : <EmptyState title="Aucune vente" />}
+      {cordagesDus.length > 0 && (
+        <section className="mt-6">
+          <h2 className="title-sport mb-2 text-xl">Cordages à payer <span className="text-sm font-normal text-slate-400">({fmtEuro(duCordages)})</span></h2>
+          <CordagesTable cordages={cordagesDus} />
+        </section>
+      )}
       <VenteForm open={open} onClose={() => setOpen(false)} />
     </div>
   )
