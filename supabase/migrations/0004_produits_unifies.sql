@@ -54,7 +54,9 @@ update public.produits p set
   prix_vente = case when a.actif and v.actif then coalesce(v.prix, a.prix) end,
   modele     = case when v.libelle <> '' then a.nom else '' end,
   taille     = v.libelle,
-  ordre      = v.ordre
+  ordre      = v.ordre,
+  -- nom de chaque taille aligné sur le modèle : « Maillot club – M »
+  designation = case when v.libelle <> '' then a.nom || ' – ' || v.libelle else p.designation end
 from public.article_variantes v
 join public.articles a on a.id = v.article_id
 where p.id = v.produit_id;
