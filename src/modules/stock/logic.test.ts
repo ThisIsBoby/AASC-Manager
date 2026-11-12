@@ -12,7 +12,7 @@ const sp = (id: string, stock: number, seuil: number, actif = true): StockProdui
 })
 
 const tournoi = (id: string, nb: number, statut: 'prepa' | 'termine' = 'prepa', modele_id = 'm1'): Tournoi =>
-  ({ id, nom: id, date: null, nb_joueurs: nb, modele_id, statut, created_at: '' })
+  ({ id, nom: id, date: null, nb_joueurs: nb, type: 'tournoi', modele_id, statut, created_at: '' })
 
 describe('besoinLigne', () => {
   it('fixe + par joueur arrondi au supérieur', () => {

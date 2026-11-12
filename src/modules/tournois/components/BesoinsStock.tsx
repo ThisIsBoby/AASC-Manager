@@ -68,7 +68,7 @@ export function BesoinsStock({ t }: { t: Tournoi }) {
 
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
         <div className="card card-accent col-span-2 p-4 sm:col-span-1">
-          <p className="label flex items-center gap-1"><Users size={12} /> Joueurs</p>
+          <p className="label flex items-center gap-1"><Users size={12} /> {t.type === 'interclub' ? 'Personnes' : 'Joueurs'}</p>
           {enPrepa ? (
             <div className="flex items-center gap-3">
               <input type="range" min={1} max={300} value={nb} onChange={e => setNb(Number(e.target.value))} onMouseUp={saveNb} onTouchEnd={saveNb} className="no-print flex-1 accent-aasc-orange" />

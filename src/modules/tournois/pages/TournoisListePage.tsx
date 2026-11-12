@@ -3,24 +3,33 @@ import { Link, useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
 import { CalendarDays, ClipboardCheck, Plus, Users } from 'lucide-react'
 import { errMsg } from '@/core/supabase'
-import type { Tournoi } from '@/core/types'
+import type { Tournoi, TypeTournoi } from '@/core/types'
 import { Badge, EmptyState, Field, Modal, PageHeader, Spinner, useToast } from '@/core/ui'
 import { useModeles, useTournois, useUpsert } from '@/modules/stock/api'
 import { fmtDate } from '@/modules/stock/components/shared'
 import { useAppliquerModeleChecklist, useModelesChecklist, useTournoiTaches } from '../api'
-import { compteARebours, progression } from '../logic'
+import { compteARebours, libelleParticipants, libelleType, progression } from '../logic'
 
 export function TournoisListePage() {
   const tournois = useTournois()
   const taches = useTournoiTaches().data ?? []
   const [open, setOpen] = useState(false)
+  const [filtre, setFiltre] = useState<'' | TypeTournoi>('')
 
-  const list = tournois.data ?? []
+  const tous = tournois.data ?? []
+  const list = filtre ? tous.filter(t => (t.type ?? 'tournoi') === filtre) : tous
   return (
     <div>
       <PageHeader kicker="Organisation" title="Tournois"
-        actions={<button className="btn-primary" onClick={() => setOpen(true)}><Plus size={18} /> Nouveau tournoi</button>} />
-      {tournois.isLoading ? <Spinner /> : !list.length ? <EmptyState title="Aucun tournoi">Créez votre premier tournoi pour préparer sa checklist.</EmptyState> : (
+        actions={<button className="btn-primary" onClick={() => setOpen(true)}><Plus size={18} /> Nouveau</button>} />
+      {tous.some(t => t.type === 'interclub') && (
+        <div className="mb-4 flex gap-2">
+          {([['', 'Tous'], ['tournoi', 'Tournois'], ['interclub', 'Interclubs']] as const).map(([v, l]) => (
+            <button key={v} className={`btn ${filtre === v ? 'bg-aasc-orange text-white' : 'btn-ghost'}`} onClick={() => setFiltre(v)}>{l}</button>
+          ))}
+        </div>
+      )}
+      {tournois.isLoading ? <Spinner /> : !list.length ? <EmptyState title="Aucun tournoi">Créez un tournoi ou un interclub pour préparer sa checklist et ses achats.</EmptyState> : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {list.map(t => {
             const p = progression(taches.filter(x => x.tournoi_id === t.id))
@@ -28,12 +37,15 @@ export function TournoisListePage() {
             return (
               <Link key={t.id} to={`/tournois/${t.id}`} className="card card-accent p-4 transition hover:-translate-y-0.5 hover:shadow-glow">
                 <div className="flex items-start justify-between gap-2">
-                  <p className="title-sport text-lg leading-tight">{t.nom}</p>
+                  <div>
+                    {t.type === 'interclub' && <Badge tone="green">{libelleType(t.type)}</Badge>}
+                    <p className="title-sport text-lg leading-tight">{t.nom}</p>
+                  </div>
                   {rebours && <Badge tone={rebours === 'Passé' ? 'slate' : 'blue'}>{rebours}</Badge>}
                 </div>
                 <div className="mt-2 flex gap-4 text-sm text-slate-400">
                   <span className="inline-flex items-center gap-1"><CalendarDays size={14} />{fmtDate(t.date)}</span>
-                  <span className="inline-flex items-center gap-1"><Users size={14} />{t.nb_joueurs} joueurs</span>
+                  <span className="inline-flex items-center gap-1"><Users size={14} />{libelleParticipants(t.type, t.nb_joueurs)}</span>
                 </div>
                 <div className="mt-3">
                   <div className="mb-1 flex items-center justify-between text-xs text-slate-400">
@@ -64,7 +76,7 @@ function NouveauTournoi({ open, onClose }: { open: boolean; onClose: () => void 
   const appliquer = useAppliquerModeleChecklist()
   const nav = useNavigate()
   const toast = useToast()
-  const [f, setF] = useState({ nom: '', date: format(new Date(), 'yyyy-MM-dd'), nb_joueurs: '40', modele_id: '', checklist_id: '' })
+  const [f, setF] = useState({ type: 'tournoi' as TypeTournoi, nom: '', date: format(new Date(), 'yyyy-MM-dd'), nb_joueurs: '40', modele_id: '', checklist_id: '' })
   const [init, setInit] = useState(false)
 
   // Pré-sélectionne le premier modèle de chaque type, une seule fois
@@ -77,7 +89,7 @@ function NouveauTournoi({ open, onClose }: { open: boolean; onClose: () => void 
   async function submit(e: FormEvent) {
     e.preventDefault()
     try {
-      const t = await upsert.mutateAsync({ nom: f.nom.trim(), date: f.date || null, nb_joueurs: Number(f.nb_joueurs), modele_id: f.modele_id || null }) as Tournoi
+      const t = await upsert.mutateAsync({ type: f.type, nom: f.nom.trim(), date: f.date || null, nb_joueurs: Number(f.nb_joueurs), modele_id: f.modele_id || null }) as Tournoi
       if (f.checklist_id) {
         try { await appliquer.mutateAsync({ tournoi: t.id, modele: f.checklist_id }) }
         catch (err) { toast(`Tournoi créé, mais la checklist n'a pas pu être copiée : ${errMsg(err)}`, 'err') }
@@ -87,12 +99,18 @@ function NouveauTournoi({ open, onClose }: { open: boolean; onClose: () => void 
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Nouveau tournoi">
+    <Modal open={open} onClose={onClose} title="Nouveau tournoi / interclub">
       <form onSubmit={submit} className="space-y-4">
-        <Field label="Nom"><input className="input" required value={f.nom} onChange={e => setF({ ...f, nom: e.target.value })} placeholder="ex. Tournoi de Noël" /></Field>
+        <Field label="Type" hint={f.type === 'interclub' ? 'Rencontre reçue au club : comptez toutes les personnes présentes le soir (deux équipes).' : undefined}>
+          <select className="input" value={f.type} onChange={e => setF({ ...f, type: e.target.value as TypeTournoi })}>
+            <option value="tournoi">Tournoi</option>
+            <option value="interclub">Interclub (à domicile)</option>
+          </select>
+        </Field>
+        <Field label="Nom"><input className="input" required value={f.nom} onChange={e => setF({ ...f, nom: e.target.value })} placeholder={f.type === 'interclub' ? 'ex. Interclub J3 vs Club XYZ' : 'ex. Tournoi de Noël'} /></Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Date"><input type="date" className="input" value={f.date} onChange={e => setF({ ...f, date: e.target.value })} /></Field>
-          <Field label="Nb de joueurs"><input type="number" min={1} className="input" required value={f.nb_joueurs} onChange={e => setF({ ...f, nb_joueurs: e.target.value })} /></Field>
+          <Field label={f.type === 'interclub' ? 'Nb de personnes' : 'Nb de joueurs'}><input type="number" min={1} className="input" required value={f.nb_joueurs} onChange={e => setF({ ...f, nb_joueurs: e.target.value })} /></Field>
         </div>
         <Field label="Checklist type" hint="Les tâches sont copiées dans le tournoi ; échéances calculées depuis la date (J-x).">
           <select className="input" value={f.checklist_id} onChange={e => setF({ ...f, checklist_id: e.target.value })}>
@@ -106,7 +124,7 @@ function NouveauTournoi({ open, onClose }: { open: boolean; onClose: () => void 
             {modeles.map(m => <option key={m.id} value={m.id}>{m.nom}</option>)}
           </select>
         </Field>
-        <button className="btn-primary w-full" disabled={upsert.isPending || appliquer.isPending}>Créer le tournoi</button>
+        <button className="btn-primary w-full" disabled={upsert.isPending || appliquer.isPending}>Créer {f.type === 'interclub' ? "l'interclub" : 'le tournoi'}</button>
       </form>
     </Modal>
   )

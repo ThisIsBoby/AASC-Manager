@@ -1,4 +1,4 @@
-import type { TournoiTache } from '@/core/types'
+import type { TournoiTache, TypeTournoi } from '@/core/types'
 
 /** Date du jour au format AAAA-MM-JJ (heure locale) */
 export function aujourdhui(now = new Date()): string {
@@ -65,4 +65,13 @@ export function grouperParCategorie<T extends Pick<TournoiTache, 'categorie' | '
     map.get(k)!.push(t)
   }
   return [...map.entries()].sort(([a], [b]) => (a === '' ? 1 : b === '' ? -1 : 0))
+}
+
+/** Libellé du type d'événement */
+export const libelleType = (t?: TypeTournoi | null) => t === 'interclub' ? 'Interclub' : 'Tournoi'
+
+/** Nom des participants : un interclub compte toutes les personnes présentes (deux équipes, soirée) */
+export const libelleParticipants = (t?: TypeTournoi | null, n?: number) => {
+  const mot = t === 'interclub' ? 'personne' : 'joueur'
+  return n === undefined ? mot : `${n} ${mot}${n > 1 ? 's' : ''}`
 }

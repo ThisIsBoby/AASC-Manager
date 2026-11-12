@@ -31,7 +31,7 @@ export function AchatsPage() {
             <span>
               <span className="font-semibold">Inclure les tournois en préparation</span>
               <span className="block text-xs text-slate-400">
-                {prepa.length ? prepa.map(t => `${t.nom} (${t.nb_joueurs} j., ${fmtDate(t.date, 'dd/MM')})`).join(' · ') : 'Aucun tournoi en préparation'}
+                {prepa.length ? prepa.map(t => `${t.type === 'interclub' ? 'Interclub ' : ''}${t.nom} (${t.nb_joueurs} ${t.type === 'interclub' ? 'pers.' : 'j.'}, ${fmtDate(t.date, 'dd/MM')})`).join(' · ') : 'Aucun tournoi en préparation'}
               </span>
             </span>
           </label>
@@ -69,7 +69,7 @@ export function AchatsPage() {
           </table>
         </div>
       )}
-      {achats.some(a => a.besoinTournois > 0) && inclure && <p className="mt-3 text-xs text-slate-500"><Badge tone="blue">Info</Badge> Les quantités « Tournois » viennent des modèles de besoins × nombre de joueurs.</p>}
+      {achats.some(a => a.besoinTournois > 0) && inclure && <p className="mt-3 text-xs text-slate-500"><Badge tone="blue">Info</Badge> Les quantités « Tournois » viennent des modèles de besoins × nombre de joueurs (ou de personnes pour un interclub).</p>}
     </div>
   )
 }

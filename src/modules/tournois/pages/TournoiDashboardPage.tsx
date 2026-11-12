@@ -3,14 +3,14 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AlertTriangle, ArrowLeft, CalendarClock, ClipboardCheck, ListChecks, Package, Pencil, Printer, Trash2 } from 'lucide-react'
 import { useAuth } from '@/core/auth/AuthProvider'
 import { errMsg } from '@/core/supabase'
-import type { Tournoi } from '@/core/types'
+import type { Tournoi, TypeTournoi } from '@/core/types'
 import { Badge, EmptyState, Field, Modal, PageHeader, Spinner, StatTile, useToast } from '@/core/ui'
 import { useDelete, useTournois, useUpsert } from '@/modules/stock/api'
 import { fmtDate } from '@/modules/stock/components/shared'
 import { useTournoiTaches } from '../api'
 import { BesoinsStock } from '../components/BesoinsStock'
 import { Checklist } from '../components/Checklist'
-import { compteARebours, progression } from '../logic'
+import { compteARebours, libelleType, progression } from '../logic'
 
 export function TournoiDashboardPage() {
   const { id } = useParams()
@@ -34,7 +34,7 @@ export function TournoiDashboardPage() {
   return (
     <div>
       <Link to="/tournois" className="no-print mb-3 inline-flex items-center gap-1 text-sm text-slate-400 hover:text-white"><ArrowLeft size={16} /> Tournois</Link>
-      <PageHeader kicker={`${fmtDate(t.date)}${rebours ? ` · ${rebours}` : ''}`} title={t.nom}
+      <PageHeader kicker={`${t.type === 'interclub' ? 'Interclub · ' : ''}${fmtDate(t.date)}${rebours ? ` · ${rebours}` : ''}`} title={t.nom}
         actions={<>
           <button className="btn-ghost" onClick={() => setEdition(true)}><Pencil size={16} /> Modifier</button>
           <button className="btn-ghost" onClick={() => window.print()}><Printer size={16} /> Imprimer</button>
@@ -79,13 +79,19 @@ function EditTournoi({ t, onClose }: { t: Tournoi; onClose: () => void }) {
   const upsert = useUpsert<Tournoi>('tournois', ['tournois'])
   const [nom, setNom] = useState(t.nom)
   const [date, setDate] = useState(t.date ?? '')
+  const [type, setType] = useState<TypeTournoi>(t.type ?? 'tournoi')
 
   return (
-    <Modal open onClose={onClose} title="Modifier le tournoi">
+    <Modal open onClose={onClose} title={`Modifier ${t.type === 'interclub' ? "l'interclub" : 'le tournoi'}`}>
       <form className="space-y-4" onSubmit={async e => {
         e.preventDefault()
-        try { await upsert.mutateAsync({ id: t.id, nom: nom.trim(), date: date || null }); onClose() } catch (err) { toast(errMsg(err), 'err') }
+        try { await upsert.mutateAsync({ id: t.id, type, nom: nom.trim(), date: date || null }); onClose() } catch (err) { toast(errMsg(err), 'err') }
       }}>
+        <Field label="Type">
+          <select className="input" value={type} onChange={e => setType(e.target.value as TypeTournoi)}>
+            {(['tournoi', 'interclub'] as const).map(v => <option key={v} value={v}>{libelleType(v)}</option>)}
+          </select>
+        </Field>
         <Field label="Nom"><input className="input" required value={nom} onChange={e => setNom(e.target.value)} /></Field>
         <Field label="Date" hint="Les échéances déjà fixées sur les tâches ne sont pas recalculées."><input type="date" className="input" value={date} onChange={e => setDate(e.target.value)} /></Field>
         <button className="btn-primary w-full" disabled={upsert.isPending}>Enregistrer</button>

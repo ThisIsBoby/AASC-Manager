@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { compteARebours, echeanceDepuisJ, ecartJours, etatTache, grouperParCategorie, progression } from './logic'
+import { compteARebours, libelleParticipants, libelleType, echeanceDepuisJ, ecartJours, etatTache, grouperParCategorie, progression } from './logic'
 
 const T = '2026-11-10'
 const tache = (fait: boolean, echeance: string | null, categorie = '', ordre = 0) => ({ fait, echeance, categorie, ordre })
@@ -41,5 +41,15 @@ describe('checklist tournoi', () => {
     ])
     expect(g.map(([k]) => k)).toEqual(['Buvette', 'Logistique', ''])
     expect(g[0][1].map(t => t.ordre)).toEqual([4, 2])
+  })
+})
+
+describe('type de tournoi', () => {
+  it('libelle le type et les participants', () => {
+    expect(libelleType('interclub')).toBe('Interclub')
+    expect(libelleType(undefined)).toBe('Tournoi')
+    expect(libelleParticipants('interclub', 30)).toBe('30 personnes')
+    expect(libelleParticipants('tournoi', 1)).toBe('1 joueur')
+    expect(libelleParticipants('tournoi')).toBe('joueur')
   })
 })
