@@ -29,9 +29,9 @@ export function AchatsPage() {
           <label className="flex cursor-pointer items-start gap-3">
             <input type="checkbox" className="mt-1 h-5 w-5 accent-aasc-orange" checked={inclure} onChange={e => setInclure(e.target.checked)} />
             <span>
-              <span className="font-semibold">Inclure les tournois en préparation</span>
+              <span className="font-semibold">Inclure les événements en préparation</span>
               <span className="block text-xs text-slate-400">
-                {prepa.length ? prepa.map(t => `${t.type === 'interclub' ? 'Interclub ' : ''}${t.nom} (${t.nb_joueurs} ${t.type === 'interclub' ? 'pers.' : 'j.'}, ${fmtDate(t.date, 'dd/MM')})`).join(' · ') : 'Aucun tournoi en préparation'}
+                {prepa.length ? prepa.map(t => `${t.nom} (${t.nb_joueurs} ${(t.type ?? 'tournoi') === 'tournoi' ? 'j.' : 'pers.'}, ${fmtDate(t.date, 'dd/MM')})`).join(' · ') : 'Aucun événement en préparation'}
               </span>
             </span>
           </label>
@@ -45,7 +45,7 @@ export function AchatsPage() {
           <table className="table-sport">
             <thead><tr>
               <th className="w-10" /><th>Produit</th><th className="text-right">Stock</th><th className="text-right">Seuil</th>
-              {inclure && <th className="text-right">Tournois</th>}<th className="text-right">À acheter</th>
+              {inclure && <th className="text-right">Événements</th>}<th className="text-right">À acheter</th>
             </tr></thead>
             <tbody>
               {achats.map(a => {
@@ -69,7 +69,7 @@ export function AchatsPage() {
           </table>
         </div>
       )}
-      {achats.some(a => a.besoinTournois > 0) && inclure && <p className="mt-3 text-xs text-slate-500"><Badge tone="blue">Info</Badge> Les quantités « Tournois » viennent des modèles de besoins × nombre de joueurs (ou de personnes pour un interclub).</p>}
+      {achats.some(a => a.besoinTournois > 0) && inclure && <p className="mt-3 text-xs text-slate-500"><Badge tone="blue">Info</Badge> Les quantités « Événements » viennent des modèles de besoins × nombre de joueurs (ou de personnes pour un interclub ou un événement).</p>}
     </div>
   )
 }

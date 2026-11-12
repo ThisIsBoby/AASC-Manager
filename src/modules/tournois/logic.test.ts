@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { compteARebours, libelleParticipants, libelleType, echeanceDepuisJ, ecartJours, etatTache, grouperParCategorie, progression } from './logic'
+import { avecArticle, compteARebours, libelleParticipants, libelleType, echeanceDepuisJ, ecartJours, etatTache, grouperParCategorie, progression } from './logic'
 
 const T = '2026-11-10'
 const tache = (fait: boolean, echeance: string | null, categorie = '', ordre = 0) => ({ fait, echeance, categorie, ordre })
@@ -51,5 +51,8 @@ describe('type de tournoi', () => {
     expect(libelleParticipants('interclub', 30)).toBe('30 personnes')
     expect(libelleParticipants('tournoi', 1)).toBe('1 joueur')
     expect(libelleParticipants('tournoi')).toBe('joueur')
+    expect(libelleType('evenement')).toBe('Événement')
+    expect(libelleParticipants('evenement', 50)).toBe('50 personnes')
+    expect(avecArticle('evenement')).toBe("l'événement")
   })
 })

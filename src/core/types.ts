@@ -53,7 +53,7 @@ export interface Peremption {
 
 export interface ModeleTournoi { id: string; nom: string; description: string }
 export interface ModeleLigne { id: string; modele_id: string; produit_id: string; qte_par_joueur: number; qte_fixe: number }
-export type TypeTournoi = 'tournoi' | 'interclub'
+export type TypeTournoi = 'tournoi' | 'interclub' | 'evenement'
 export interface Tournoi {
   id: string; nom: string; date: string | null; nb_joueurs: number; type: TypeTournoi
   modele_id: string | null; statut: 'prepa' | 'termine'; created_at: string

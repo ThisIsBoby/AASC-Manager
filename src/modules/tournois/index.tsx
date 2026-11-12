@@ -1,4 +1,4 @@
-import { LayoutTemplate, Trophy } from 'lucide-react'
+import { CalendarHeart, LayoutTemplate } from 'lucide-react'
 import type { AppModule } from '@/core/modules'
 import { TournoisListePage } from './pages/TournoisListePage'
 import { TournoiDashboardPage } from './pages/TournoiDashboardPage'
@@ -7,9 +7,9 @@ import { TournoisAccueil } from './components/TournoisAccueil'
 
 export const tournoisModule: AppModule = {
   id: 'tournois',
-  nom: 'Tournois',
+  nom: 'Événements',
   nav: [
-    { to: '/tournois', label: 'Tournois', icon: Trophy, end: true },
+    { to: '/tournois', label: 'Événements', icon: CalendarHeart, end: true },
     { to: '/tournois/modeles', label: 'Modèles', icon: LayoutTemplate },
   ],
   Accueil: TournoisAccueil,

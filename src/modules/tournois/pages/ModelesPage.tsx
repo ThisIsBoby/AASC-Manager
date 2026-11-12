@@ -12,7 +12,7 @@ export function ModelesPage() {
   const [tab, setTab] = useState<'checklists' | 'besoins'>('checklists')
   return (
     <div>
-      <PageHeader kicker="Tournois" title={`Modèles${isAdmin ? '' : ' (lecture)'}`} />
+      <PageHeader kicker="Événements" title={`Modèles${isAdmin ? '' : ' (lecture)'}`} />
       <div className="mb-5 flex gap-2">
         <button className={`btn ${tab === 'checklists' ? 'bg-aasc-orange text-white' : 'btn-ghost'}`} onClick={() => setTab('checklists')}><ListChecks size={16} /> Checklists</button>
         <button className={`btn ${tab === 'besoins' ? 'bg-aasc-orange text-white' : 'btn-ghost'}`} onClick={() => setTab('besoins')}><Package size={16} /> Besoins stock</button>
@@ -108,7 +108,7 @@ function ModelesChecklist() {
             <Field label="Nom de la checklist"><input className="input" disabled={ro} value={nom} onChange={e => setNom(e.target.value)} /></Field>
             <Field label="Description"><input className="input" disabled={ro} value={desc} onChange={e => setDesc(e.target.value)} /></Field>
           </div>
-          <p className="mt-4 text-sm text-slate-400"><b>J-x</b> = nombre de jours avant le tournoi : l'échéance est calculée à partir de la date du tournoi. Laisser vide pour « sans échéance ».</p>
+          <p className="mt-4 text-sm text-slate-400"><b>J-x</b> = nombre de jours avant l'événement : l'échéance est calculée à partir de sa date. Laisser vide pour « sans échéance ».</p>
           <datalist id="categories-modele">{categories.map(c => <option key={c} value={c} />)}</datalist>
           <div className="mt-3 overflow-x-auto">
             <table className="table-sport">
@@ -130,13 +130,13 @@ function ModelesChecklist() {
               <button className="btn-ghost" onClick={() => setRows([...rows, { libelle: '', categorie: '', jours_avant: '' }])}><Plus size={16} /> Tâche</button>
               <button className="btn-primary" onClick={enregistrer} disabled={save.isPending}><Save size={16} /> Enregistrer</button>
               <button className="btn-ghost ml-auto text-red-300" onClick={async () => {
-                if (!confirm(`Supprimer la checklist « ${current.nom} » ? (les tournois déjà créés gardent leurs tâches)`)) return
+                if (!confirm(`Supprimer la checklist « ${current.nom} » ? (les événements déjà créés gardent leurs tâches)`)) return
                 try { await del.mutateAsync(current.id); setSel(''); toast('Checklist supprimée') } catch (err) { toast(errMsg(err), 'err') }
               }}><Trash2 size={16} /> Supprimer</button>
             </div>
           )}
         </div>
-      ) : <EmptyState title="Aucune checklist type">{isAdmin ? 'Créez une checklist réutilisable pour vos tournois.' : 'Un administrateur doit créer une checklist type.'}</EmptyState>}
+      ) : <EmptyState title="Aucune checklist type">{isAdmin ? 'Créez une checklist réutilisable pour vos événements.' : 'Un administrateur doit créer une checklist type.'}</EmptyState>}
 
       <NouveauModele open={creating} onClose={() => setCreating(false)} placeholder="ex. Tournoi jeunes"
         onCreate={async (n, d) => {
@@ -230,7 +230,7 @@ function ModelesBesoins() {
             </div>
           )}
         </div>
-      ) : <EmptyState title="Aucun modèle">{isAdmin ? 'Créez un modèle de besoins pour vos tournois.' : 'Un administrateur doit créer un modèle.'}</EmptyState>}
+      ) : <EmptyState title="Aucun modèle">{isAdmin ? 'Créez un modèle de besoins pour vos événements.' : 'Un administrateur doit créer un modèle.'}</EmptyState>}
 
       <NouveauModele open={creating} onClose={() => setCreating(false)} placeholder="ex. Tournoi jeunes"
         onCreate={async (n, d) => {

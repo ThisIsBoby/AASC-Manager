@@ -67,11 +67,26 @@ export function grouperParCategorie<T extends Pick<TournoiTache, 'categorie' | '
   return [...map.entries()].sort(([a], [b]) => (a === '' ? 1 : b === '' ? -1 : 0))
 }
 
-/** Libellé du type d'événement */
-export const libelleType = (t?: TypeTournoi | null) => t === 'interclub' ? 'Interclub' : 'Tournoi'
+export const TYPES_TOURNOI: TypeTournoi[] = ['tournoi', 'interclub', 'evenement']
 
-/** Nom des participants : un interclub compte toutes les personnes présentes (deux équipes, soirée) */
+const INFOS: Record<TypeTournoi, { libelle: string; pluriel: string; le: string; badge: 'orange' | 'green' | 'blue' }> = {
+  tournoi: { libelle: 'Tournoi', pluriel: 'Tournois', le: 'le tournoi', badge: 'orange' },
+  interclub: { libelle: 'Interclub', pluriel: 'Interclubs', le: "l'interclub", badge: 'green' },
+  evenement: { libelle: 'Événement', pluriel: 'Événements', le: "l'événement", badge: 'blue' },
+}
+const infos = (t?: TypeTournoi | null) => INFOS[t ?? 'tournoi'] ?? INFOS.tournoi
+
+/** Libellé du type (« Tournoi », « Interclub », « Événement ») */
+export const libelleType = (t?: TypeTournoi | null) => infos(t).libelle
+/** Libellé au pluriel, pour les filtres */
+export const plurielType = (t?: TypeTournoi | null) => infos(t).pluriel
+/** Avec article : « le tournoi », « l'interclub », « l'événement » */
+export const avecArticle = (t?: TypeTournoi | null) => infos(t).le
+/** Couleur du badge */
+export const couleurType = (t?: TypeTournoi | null) => infos(t).badge
+
+/** Un tournoi compte des joueurs ; un interclub ou un événement compte toutes les personnes présentes */
 export const libelleParticipants = (t?: TypeTournoi | null, n?: number) => {
-  const mot = t === 'interclub' ? 'personne' : 'joueur'
+  const mot = (t ?? 'tournoi') === 'tournoi' ? 'joueur' : 'personne'
   return n === undefined ? mot : `${n} ${mot}${n > 1 ? 's' : ''}`
 }

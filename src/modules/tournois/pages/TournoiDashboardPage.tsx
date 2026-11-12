@@ -10,7 +10,7 @@ import { fmtDate } from '@/modules/stock/components/shared'
 import { useTournoiTaches } from '../api'
 import { BesoinsStock } from '../components/BesoinsStock'
 import { Checklist } from '../components/Checklist'
-import { compteARebours, libelleType, progression } from '../logic'
+import { avecArticle, compteARebours, libelleType, progression, TYPES_TOURNOI } from '../logic'
 
 export function TournoiDashboardPage() {
   const { id } = useParams()
@@ -25,7 +25,7 @@ export function TournoiDashboardPage() {
   const [edition, setEdition] = useState(false)
 
   if (tournois.isLoading) return <Spinner />
-  if (!t) return <EmptyState title="Tournoi introuvable"><Link to="/tournois" className="text-aasc-orange">Retour</Link></EmptyState>
+  if (!t) return <EmptyState title="Événement introuvable"><Link to="/tournois" className="text-aasc-orange">Retour</Link></EmptyState>
 
   const taches = (toutes.data ?? []).filter(x => x.tournoi_id === t.id)
   const p = progression(taches)
@@ -33,13 +33,13 @@ export function TournoiDashboardPage() {
 
   return (
     <div>
-      <Link to="/tournois" className="no-print mb-3 inline-flex items-center gap-1 text-sm text-slate-400 hover:text-white"><ArrowLeft size={16} /> Tournois</Link>
-      <PageHeader kicker={`${t.type === 'interclub' ? 'Interclub · ' : ''}${fmtDate(t.date)}${rebours ? ` · ${rebours}` : ''}`} title={t.nom}
+      <Link to="/tournois" className="no-print mb-3 inline-flex items-center gap-1 text-sm text-slate-400 hover:text-white"><ArrowLeft size={16} /> Événements</Link>
+      <PageHeader kicker={`${libelleType(t.type)} · ${fmtDate(t.date)}${rebours ? ` · ${rebours}` : ''}`} title={t.nom}
         actions={<>
           <button className="btn-ghost" onClick={() => setEdition(true)}><Pencil size={16} /> Modifier</button>
           <button className="btn-ghost" onClick={() => window.print()}><Printer size={16} /> Imprimer</button>
-          {isAdmin && <button className="btn-ghost text-red-300" aria-label="Supprimer le tournoi" onClick={async () => {
-            if (!confirm('Supprimer ce tournoi et sa checklist ? (les mouvements de stock déjà faits sont conservés)')) return
+          {isAdmin && <button className="btn-ghost text-red-300" aria-label={`Supprimer ${avecArticle(t.type)}`} onClick={async () => {
+            if (!confirm(`Supprimer ${avecArticle(t.type)} et sa checklist ? (les mouvements de stock déjà faits sont conservés)`)) return
             try { await del.mutateAsync(t.id); nav('/tournois') } catch (e) { toast(errMsg(e), 'err') }
           }}><Trash2 size={16} /></button>}
         </>} />
@@ -82,14 +82,14 @@ function EditTournoi({ t, onClose }: { t: Tournoi; onClose: () => void }) {
   const [type, setType] = useState<TypeTournoi>(t.type ?? 'tournoi')
 
   return (
-    <Modal open onClose={onClose} title={`Modifier ${t.type === 'interclub' ? "l'interclub" : 'le tournoi'}`}>
+    <Modal open onClose={onClose} title={`Modifier ${avecArticle(t.type)}`}>
       <form className="space-y-4" onSubmit={async e => {
         e.preventDefault()
         try { await upsert.mutateAsync({ id: t.id, type, nom: nom.trim(), date: date || null }); onClose() } catch (err) { toast(errMsg(err), 'err') }
       }}>
         <Field label="Type">
           <select className="input" value={type} onChange={e => setType(e.target.value as TypeTournoi)}>
-            {(['tournoi', 'interclub'] as const).map(v => <option key={v} value={v}>{libelleType(v)}</option>)}
+            {TYPES_TOURNOI.map(v => <option key={v} value={v}>{libelleType(v)}</option>)}
           </select>
         </Field>
         <Field label="Nom"><input className="input" required value={nom} onChange={e => setNom(e.target.value)} /></Field>
