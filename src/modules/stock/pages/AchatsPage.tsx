@@ -7,14 +7,19 @@ import { calculAchats } from '../logic'
 
 export function AchatsPage() {
   const stock = useStockProduits()
-  const tournois = useTournois().data ?? []
+  const tournoisData = useTournois().data
   const lignes = useModeleLignes().data ?? []
   const refs = useRefs()
-  const [inclure, setInclure] = useState(true)
+  const [exclus, setExclus] = useState<Set<string>>(new Set())
   const [coches, setCoches] = useState<Set<string>>(new Set())
 
-  const prepa = tournois.filter(t => t.statut === 'prepa')
-  const achats = useMemo(() => calculAchats(stock.data ?? [], tournois, lignes, inclure), [stock.data, tournois, lignes, inclure])
+  const prepa = useMemo(() => (tournoisData ?? []).filter(t => t.statut === 'prepa'), [tournoisData])
+  const selection = useMemo(() => prepa.filter(t => !exclus.has(t.id)), [prepa, exclus])
+  const inclure = selection.length > 0
+  const tous = prepa.length > 0 && selection.length === prepa.length
+  const achats = useMemo(() => calculAchats(stock.data ?? [], selection, lignes), [stock.data, selection, lignes])
+  const toggleEvent = (id: string) => setExclus(s => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n })
+  const toggleTous = () => setExclus(tous ? new Set(prepa.map(t => t.id)) : new Set())
   const toggle = (id: string) => setCoches(s => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n })
 
   return (
@@ -27,14 +32,25 @@ export function AchatsPage() {
         <StatTile label="Déjà dans le caddie" value={`${coches.size}/${achats.length}`} tone="blue" icon={<CheckCheck size={16} />} />
         <div className="card col-span-2 p-4 lg:col-span-1">
           <label className="flex cursor-pointer items-start gap-3">
-            <input type="checkbox" className="mt-1 h-5 w-5 accent-aasc-orange" checked={inclure} onChange={e => setInclure(e.target.checked)} />
+            <input type="checkbox" className="mt-1 h-5 w-5 accent-aasc-orange" disabled={!prepa.length}
+              checked={tous} ref={el => { if (el) el.indeterminate = inclure && !tous }} onChange={toggleTous} />
             <span>
               <span className="font-semibold">Inclure les événements en préparation</span>
-              <span className="block text-xs text-slate-400">
-                {prepa.length ? prepa.map(t => `${t.nom} (${t.nb_joueurs} ${(t.type ?? 'tournoi') === 'tournoi' ? 'j.' : 'pers.'}, ${fmtDate(t.date, 'dd/MM')})`).join(' · ') : 'Aucun événement en préparation'}
-              </span>
+              {!prepa.length && <span className="block text-xs text-slate-400">Aucun événement en préparation</span>}
             </span>
           </label>
+          {prepa.length > 0 && (
+            <ul className="mt-2 space-y-1 pl-8">
+              {prepa.map(t => (
+                <li key={t.id}>
+                  <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-300">
+                    <input type="checkbox" className="h-4 w-4 accent-aasc-orange" checked={!exclus.has(t.id)} onChange={() => toggleEvent(t.id)} />
+                    <span>{t.nom} <span className="text-slate-500">({t.nb_joueurs} {(t.type ?? 'tournoi') === 'tournoi' ? 'j.' : 'pers.'}, {fmtDate(t.date, 'dd/MM')})</span></span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
 
