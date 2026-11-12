@@ -98,6 +98,27 @@ export function useDelete(table: string, keys: string[]) {
   })
 }
 
+/**
+ * Enregistre plusieurs produits d'un coup (tailles d'un modèle) : mise à jour si id, création sinon.
+ * Retourne les ids dans l'ordre des lignes.
+ */
+export function useEnregistrerProduits() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (rows: Partial<Produit>[]) => {
+      const ids: string[] = []
+      for (const { id, ...rest } of rows) {
+        const r = id
+          ? await q<Produit>(supabase.from('produits').update(rest).eq('id', id).select().single())
+          : await q<Produit>(supabase.from('produits').insert(rest).select().single())
+        ids.push(r.id)
+      }
+      return ids
+    },
+    onSuccess: () => Promise.all(['produits', 'stock'].map(k => qc.invalidateQueries({ queryKey: [k] }))),
+  })
+}
+
 export function useCreerLot() {
   const inv = useInvalidateStock()
   return useMutation({

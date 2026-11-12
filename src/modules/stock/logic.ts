@@ -1,4 +1,4 @@
-import type { ModeleLigne, StockProduit, Tournoi } from '@/core/types'
+import type { ModeleLigne, Produit, StockProduit, Tournoi } from '@/core/types'
 
 /** Besoin d'un produit pour un tournoi : quantité fixe + arrondi supérieur (par joueur × nb joueurs) */
 export function besoinLigne(qteParJoueur: number, qteFixe: number, nbJoueurs: number): number {
@@ -89,3 +89,52 @@ export function parseScan(text: string): { id?: string; code?: string } {
   if (c) return { code: 'C-' + c[1].padStart(3, '0') }
   return {}
 }
+
+// ---------------------------------------------------------------------
+// Catalogue : produits simples et produits déclinés en tailles
+// ---------------------------------------------------------------------
+type ProduitCatalogue = Pick<Produit, 'id' | 'designation' | 'modele' | 'taille' | 'ordre'>
+
+/** Un produit simple, ou toutes les tailles d'un même modèle */
+export interface GroupeProduits<P extends ProduitCatalogue> {
+  /** « m:<modèle> » ou « p:<id produit> » */
+  cle: string
+  nom: string
+  /** null = produit simple (sans tailles) */
+  modele: string | null
+  produits: P[]
+}
+
+export const cleGroupe = (p: Pick<Produit, 'id' | 'modele'>) => (p.modele ? `m:${p.modele}` : `p:${p.id}`)
+
+/** Désignation d'une taille : « Maillot club – M » */
+export const designationTaille = (modele: string, taille: string) => (taille ? `${modele} – ${taille}` : modele)
+
+/** Découpe « XS, S; M » en tailles distinctes */
+export const parseTailles = (txt: string) => [...new Set(txt.split(/[,;\n]/).map(s => s.trim()).filter(Boolean))]
+
+/** Regroupe les tailles d'un même modèle (triées par ordre) ; groupes triés par nom */
+export function grouperProduits<P extends ProduitCatalogue>(list: P[]): GroupeProduits<P>[] {
+  const map = new Map<string, GroupeProduits<P>>()
+  for (const p of list) {
+    const cle = cleGroupe(p)
+    let g = map.get(cle)
+    if (!g) map.set(cle, g = { cle, nom: p.modele || p.designation, modele: p.modele || null, produits: [] })
+    g.produits.push(p)
+  }
+  const groupes = [...map.values()]
+  groupes.forEach(g => g.produits.sort((a, b) => (a.ordre - b.ordre) || a.taille.localeCompare(b.taille, 'fr')))
+  return groupes.sort((a, b) => a.nom.localeCompare(b.nom, 'fr', { sensitivity: 'base' }))
+}
+
+/** Produit proposé à la vente */
+export const estVendu = (p: Pick<Produit, 'prix_vente' | 'actif'>) => p.actif && p.prix_vente != null
+
+/** Prix affiché pour un groupe : celui de ses tailles vendues (null = pas vendu) */
+export function prixGroupe(produits: Pick<Produit, 'prix_vente' | 'actif'>[]): number | null {
+  const p = produits.find(estVendu)
+  return p ? Number(p.prix_vente) : null
+}
+
+export const estStockBas = (p: Pick<StockProduit, 'seuil_min' | 'stock_valide'>) =>
+  Number(p.seuil_min) > 0 && Number(p.stock_valide) < Number(p.seuil_min)

@@ -28,7 +28,7 @@ Les droits sont appliqués dans la base (Row Level Security), pas seulement dans
 
 ### 1. Supabase
 1. Créer un compte sur <https://supabase.com> puis un **nouveau projet** (région Europe).
-2. *SQL Editor* → coller et exécuter `supabase/migrations/0001_init.sql`, puis `supabase/migrations/0002_checklist.sql` (checklists de tournoi), puis `supabase/migrations/0003_boutique.sql` (adhérents, boutique, cordage).
+2. *SQL Editor* → coller et exécuter `supabase/migrations/0001_init.sql`, puis `supabase/migrations/0002_checklist.sql` (checklists de tournoi), puis `supabase/migrations/0003_boutique.sql` (adhérents, boutique, cordage), puis `supabase/migrations/0004_produits_unifies.sql` (une seule base Produits pour le stock et la boutique).
 3. (Optionnel) exécuter `supabase/seed.sql` pour des produits, caisses et un modèle de tournoi d'exemple.
 4. *Authentication → URL Configuration* :
    - **Site URL** : `https://<votre-compte>.github.io/<nom-du-depot>/`
@@ -77,12 +77,13 @@ et peut **sortir du stock** les quantités (lots les plus proches de la pérempt
 *Achats à faire* = seuil minimum + besoins des tournois en préparation − stock non périmé.
 
 ## Boutique, cordage et adhérents
-- **Articles & prix** : un article (ex. « Maillot club », 25 €) a une ou plusieurs variantes (tailles XS…XL, ou une seule
-  pour un tube de volants). Chaque variante est reliée à un **produit du stock** : quantité et seuil « stock bas » sont ceux
-  du produit. Pour un stock « hors caisse » (réserve de tubes), créez une caisse dédiée, ex. *Réserve volants*.
-- **Vente** : adhérent → article → taille → quantité ; le prix est pré-rempli (modifiable), la quantité sort du stock
+- **Une seule base : Stock › Produits.** Stock, seuil, prix de vente et tailles se gèrent au même endroit.
+  Un produit qui a un **prix de vente** est proposé à la vente (vide = pas vendu). Un produit peut exister en **tailles**
+  (ex. « Maillot club » XS…XL) : chaque taille a son propre stock et son seuil, le nom, la catégorie et le prix sont communs.
+  Pour un stock « hors caisse » (réserve de tubes), créez une caisse dédiée, ex. *Réserve boutique*.
+- **Vente** : adhérent → produit → taille → quantité ; le prix est pré-rempli (modifiable), la quantité sort du stock
   (lots non périmés les plus anciens d'abord). Un admin peut annuler une vente : le stock est remis dans les caisses d'origine.
-- **Cordage** : offres paramétrables (par défaut club 15 €, joueur 5 €, offert 0 €). L'offre club peut être liée à un produit
+- **Cordage** : offres paramétrables dans *Cordages › Offres* (par défaut club 15 €, joueur 5 €, offert 0 €). L'offre club peut être liée à un produit
   « garniture » : 1 garniture sort du stock quand la raquette passe à *Cordée*.
 - **Paiements** : chaque vente / cordage est *payé* (espèces, chèque ou virement) ou *à payer* ;
   le reste dû apparaît sur la fiche adhérent et le tableau de bord.
@@ -103,7 +104,7 @@ et peut **sortir du stock** les quantités (lots les plus proches de la pérempt
 ```
 src/core/            socle : client Supabase, auth, layout, composants UI, registre des modules
 src/modules/stock/   module Stock & Inventaire (api, logique, pages)
-src/modules/boutique/  module Boutique & Cordage (ventes, cordages, articles, offres)
+src/modules/boutique/  module Boutique & Cordage (ventes, cordages, offres)
 src/modules/adherents/ liste des adhérents et import CSV
 src/modules/admin/   gestion des utilisateurs
 supabase/            schéma SQL (tables, RLS, fonctions) et données d'exemple

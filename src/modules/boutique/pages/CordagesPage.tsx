@@ -1,9 +1,11 @@
 import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Settings2 } from 'lucide-react'
+import { AdminOnly } from '@/core/auth/guards'
 import type { StatutCordage } from '@/core/types'
 import { EmptyState, PageHeader, Spinner } from '@/core/ui'
 import { useCordages } from '../api'
 import { CordageForm } from '../components/shared'
+import { OffresCordage } from '../components/offres'
 import { CordagesTable } from '../components/tables'
 import { STATUTS } from '../logic'
 
@@ -12,6 +14,7 @@ export function CordagesPage() {
   const [statut, setStatut] = useState<StatutCordage | 'en_cours' | ''>('en_cours')
   const [paye, setPaye] = useState<'' | 'oui' | 'non'>('')
   const [open, setOpen] = useState(false)
+  const [offres, setOffres] = useState(false)
 
   const all = cordages.data ?? []
   const list = all.filter(c =>
@@ -21,7 +24,10 @@ export function CordagesPage() {
   return (
     <div>
       <PageHeader kicker="Boutique & Cordage" title="Cordages"
-        actions={<button className="btn-primary" onClick={() => setOpen(true)}><Plus size={18} /> Nouveau cordage</button>} />
+        actions={<>
+          <AdminOnly><button className="btn-ghost" onClick={() => setOffres(true)} title="Prix et garnitures"><Settings2 size={18} /> Offres</button></AdminOnly>
+          <button className="btn-primary" onClick={() => setOpen(true)}><Plus size={18} /> Nouveau cordage</button>
+        </>} />
       <div className="mb-4 flex flex-wrap gap-2">
         <select className="input w-auto" value={statut} onChange={e => setStatut(e.target.value as typeof statut)}>
           <option value="en_cours">En cours (déposées + cordées)</option>
@@ -36,6 +42,7 @@ export function CordagesPage() {
       </div>
       {cordages.isLoading ? <Spinner /> : list.length ? <CordagesTable cordages={list} /> : <EmptyState title="Aucun cordage" />}
       <CordageForm open={open} onClose={() => setOpen(false)} />
+      <OffresCordage open={offres} onClose={() => setOffres(false)} />
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { besoinLigne, calculAchats, calculPreparation, etatPeremption, parseScan } from './logic'
+import { besoinLigne, calculAchats, calculPreparation, designationTaille, estStockBas, estVendu, etatPeremption, grouperProduits, parseScan, parseTailles, prixGroupe } from './logic'
 import type { ModeleLigne, StockProduit, Tournoi } from '@/core/types'
 
 const ligne = (produit_id: string, qte_par_joueur: number, qte_fixe: number, modele_id = 'm1'): ModeleLigne =>
@@ -8,6 +8,7 @@ const ligne = (produit_id: string, qte_par_joueur: number, qte_fixe: number, mod
 const sp = (id: string, stock: number, seuil: number, actif = true): StockProduit => ({
   id, designation: id, categorie_id: null, unite: 'u', seuil_min: seuil, actif,
   stock_valide: stock, stock_perime: 0, prochaine_peremption: null, nb_lots: 1,
+  prix_vente: null, modele: '', taille: '', ordre: 0,
 })
 
 const tournoi = (id: string, nb: number, statut: 'prepa' | 'termine' = 'prepa', modele_id = 'm1'): Tournoi =>
@@ -74,5 +75,34 @@ describe('parseScan', () => {
     expect(parseScan('c-7')).toEqual({ code: 'C-007' })
     expect(parseScan('C-012')).toEqual({ code: 'C-012' })
     expect(parseScan('bonjour')).toEqual({})
+  })
+})
+
+describe('catalogue', () => {
+  const p = (id: string, modele = '', taille = '', ordre = 0) => ({ id, designation: designationTaille(modele || id, taille), modele, taille, ordre })
+
+  it('regroupe les tailles d\'un même modèle, dans l\'ordre', () => {
+    const g = grouperProduits([p('volants'), p('m3', 'Maillot club', 'L', 3), p('m1', 'Maillot club', 'S', 1), p('m2', 'Maillot club', 'M', 2), p('eau')])
+    expect(g.map(x => x.nom)).toEqual(['eau', 'Maillot club', 'volants'])
+    expect(g[1].modele).toBe('Maillot club')
+    expect(g[1].produits.map(x => x.taille)).toEqual(['S', 'M', 'L'])
+    expect(g[0].modele).toBeNull()
+    expect(g[0].cle).toBe('p:eau')
+  })
+
+  it('nomme les tailles et lit la saisie', () => {
+    expect(designationTaille('Maillot club', 'M')).toBe('Maillot club – M')
+    expect(designationTaille('Tube RSL', '')).toBe('Tube RSL')
+    expect(parseTailles('XS, S;M\n M , ')).toEqual(['XS', 'S', 'M'])
+  })
+
+  it('prix de vente et stock bas', () => {
+    expect(estVendu({ prix_vente: 0, actif: true })).toBe(true)
+    expect(estVendu({ prix_vente: null, actif: true })).toBe(false)
+    expect(estVendu({ prix_vente: 25, actif: false })).toBe(false)
+    expect(prixGroupe([{ prix_vente: null, actif: true }, { prix_vente: 25, actif: true }])).toBe(25)
+    expect(prixGroupe([{ prix_vente: null, actif: true }])).toBeNull()
+    expect(estStockBas({ seuil_min: 5, stock_valide: 2 })).toBe(true)
+    expect(estStockBas({ seuil_min: 0, stock_valide: 0 })).toBe(false)
   })
 })

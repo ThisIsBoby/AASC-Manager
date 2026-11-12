@@ -1,26 +1,30 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import { EmptyState, PageHeader, Spinner, StatTile } from '@/core/ui'
-import { useArticles, useVariantes, useVentes } from '../api'
+import { useProduits } from '@/modules/stock/api'
+import { cleGroupe, grouperProduits } from '@/modules/stock/logic'
+import { useVentes } from '../api'
 import { VenteForm } from '../components/shared'
 import { VentesTable } from '../components/tables'
 import { fmtEuro, venteDue } from '../logic'
 
 export function VentesPage() {
   const ventes = useVentes()
-  const articles = useArticles().data ?? []
-  const variantes = useVariantes().data ?? []
+  const produitsList = useProduits().data
+  // Filtre « article » : tous les produits ayant déjà un prix de vente (tailles regroupées)
+  const produits = useMemo(() => new Map((produitsList ?? []).map(p => [p.id, p])), [produitsList])
+  const articles = useMemo(() => grouperProduits((produitsList ?? []).filter(p => p.prix_vente != null)), [produitsList])
   const [params] = useSearchParams()
   const [paye, setPaye] = useState<'' | 'oui' | 'non'>(params.get('paye') === 'non' ? 'non' : '')
   const [article, setArticle] = useState('')
   const [depuis, setDepuis] = useState('')
   const [open, setOpen] = useState(false)
 
-  const varsArticle = new Set(variantes.filter(v => v.article_id === article).map(v => v.id))
+  const cleVente = (produitId: string | null) => { const p = produitId ? produits.get(produitId) : undefined; return p ? cleGroupe(p) : '' }
   const list = (ventes.data ?? []).filter(v =>
     (paye === '' || (paye === 'oui' ? v.paye : !v.paye && !v.annulee && Number(v.total) > 0)) &&
-    (!article || (v.variante_id && varsArticle.has(v.variante_id))) &&
+    (!article || cleVente(v.produit_id) === article) &&
     (!depuis || v.created_at >= depuis))
   const actives = list.filter(v => !v.annulee)
   const ca = actives.reduce((s, v) => s + Number(v.total), 0)
@@ -38,7 +42,7 @@ export function VentesPage() {
         </select>
         <select className="input w-auto" value={article} onChange={e => setArticle(e.target.value)}>
           <option value="">Tous les articles</option>
-          {articles.map(a => <option key={a.id} value={a.id}>{a.nom}</option>)}
+          {articles.map(a => <option key={a.cle} value={a.cle}>{a.nom}</option>)}
         </select>
         <label className="flex items-center gap-2 text-sm text-slate-400">Depuis
           <input type="date" className="input w-auto" value={depuis} onChange={e => setDepuis(e.target.value)} />

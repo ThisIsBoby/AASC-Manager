@@ -1,4 +1,4 @@
-import type { Article, ArticleVariante, Cordage, MoyenPaiement, StatutCordage, Vente } from '@/core/types'
+import type { Cordage, MoyenPaiement, StatutCordage, Vente } from '@/core/types'
 
 export const MOYENS: { v: Exclude<MoyenPaiement, ''>; label: string }[] = [
   { v: 'especes', label: 'Espèces' },
@@ -17,24 +17,6 @@ export const libelleStatut = (s: StatutCordage) => STATUTS.find(x => x.v === s)?
 export function etapeSuivante(s: StatutCordage): StatutCordage | null {
   const i = STATUTS.findIndex(x => x.v === s)
   return STATUTS[i + 1]?.v ?? null
-}
-
-/** Prix effectif d'une variante : son prix propre, sinon celui de l'article */
-export const prixVariante = (a: Pick<Article, 'prix'>, v: Pick<ArticleVariante, 'prix'>) => Number(v.prix ?? a.prix)
-
-export const libelleVente = (a: Pick<Article, 'nom'>, v: Pick<ArticleVariante, 'libelle'>) =>
-  a.nom + (v.libelle ? ` – ${v.libelle}` : '')
-
-/** Stock disponible d'une variante (null = article non suivi en stock) */
-export function stockVariante(v: Pick<ArticleVariante, 'produit_id'>, stock: Map<string, { stock_valide: number }>): number | null {
-  if (!v.produit_id) return null
-  return Number(stock.get(v.produit_id)?.stock_valide ?? 0)
-}
-
-export function estStockBas(v: Pick<ArticleVariante, 'produit_id'>, stock: Map<string, { stock_valide: number; seuil_min: number }>) {
-  if (!v.produit_id) return false
-  const s = stock.get(v.produit_id)
-  return !!s && Number(s.seuil_min) > 0 && Number(s.stock_valide) < Number(s.seuil_min)
 }
 
 export const venteDue = (v: Pick<Vente, 'paye' | 'annulee' | 'total'>) => (!v.paye && !v.annulee ? Number(v.total) : 0)

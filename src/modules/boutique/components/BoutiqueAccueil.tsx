@@ -1,28 +1,24 @@
-import { useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { AlertTriangle, Euro, PackageCheck, Wrench } from 'lucide-react'
 import { Badge, StatTile, fmtQ } from '@/core/ui'
 import { useStockProduits } from '@/modules/stock/api'
-import { useArticles, useCordages, useVariantes, useVentes } from '../api'
+import { estStockBas, estVendu } from '@/modules/stock/logic'
+import { useCordages, useVentes } from '../api'
 import { CordagesTable, VentesTable } from './tables'
-import { estStockBas, libelleVente, resteAPayer, fmtEuro } from '../logic'
+import { resteAPayer, fmtEuro } from '../logic'
 
 /** Bloc « Boutique & Cordage » de l'accueil commun. */
 export function BoutiqueAccueil() {
   const ventes = useVentes().data ?? []
   const cordages = useCordages().data ?? []
-  const articles = useArticles().data ?? []
-  const variantes = useVariantes().data ?? []
-  const stockList = useStockProduits().data
-  const stock = useMemo(() => new Map((stockList ?? []).map(s => [s.id, s])), [stockList])
+  const stock = useStockProduits().data ?? []
   const nav = useNavigate()
 
   const aCorder = cordages.filter(c => c.statut === 'deposee')
   const aRendre = cordages.filter(c => c.statut === 'cordee')
   const du = resteAPayer(ventes, cordages)
-  const bas = variantes.filter(v => v.actif && estStockBas(v, stock))
-    .map(v => ({ v, a: articles.find(a => a.id === v.article_id) }))
-    .filter(x => x.a?.actif)
+  // Produits vendus en boutique passés sous leur seuil
+  const bas = stock.filter(p => estVendu(p) && estStockBas(p))
 
   return (
     <div>
@@ -30,15 +26,15 @@ export function BoutiqueAccueil() {
         <StatTile label="Raquettes à corder" value={aCorder.length} tone="orange" icon={<Wrench size={16} />} onClick={() => nav('/boutique/cordages')} />
         <StatTile label="À rendre" value={aRendre.length} tone="blue" icon={<PackageCheck size={16} />} onClick={() => nav('/boutique/cordages')} />
         <StatTile label="Impayés" value={fmtEuro(du.total)} tone={du.total > 0 ? 'red' : 'green'} icon={<Euro size={16} />} onClick={() => nav('/boutique/ventes?paye=non')} />
-        <StatTile label="Stock bas" value={bas.length} tone={bas.length ? 'red' : 'green'} icon={<AlertTriangle size={16} />} onClick={() => nav('/boutique/articles')} />
+        <StatTile label="Stock bas" value={bas.length} tone={bas.length ? 'red' : 'green'} icon={<AlertTriangle size={16} />} onClick={() => nav('/stock/produits?vendu=1')} />
       </div>
 
       {bas.length > 0 && (
         <div className="card mb-4 p-4">
           <p className="mb-2 text-sm font-semibold text-red-300">Articles sous le seuil</p>
           <div className="flex flex-wrap gap-2">
-            {bas.map(({ v, a }) => (
-              <Badge key={v.id} tone="red">{libelleVente(a!, v)} : {fmtQ(stock.get(v.produit_id!)?.stock_valide)} / {fmtQ(stock.get(v.produit_id!)?.seuil_min)}</Badge>
+            {bas.map(p => (
+              <Badge key={p.id} tone="red">{p.designation} : {fmtQ(p.stock_valide)} / {fmtQ(p.seuil_min)}</Badge>
             ))}
           </div>
         </div>

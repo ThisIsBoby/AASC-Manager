@@ -3,9 +3,10 @@ import { errMsg } from '@/core/supabase'
 import type { MoyenPaiement, OffreCordage, StatutCordage } from '@/core/types'
 import { Badge, Field, Modal, fmtQ, useToast } from '@/core/ui'
 import { useStockProduits } from '@/modules/stock/api'
+import { estVendu, grouperProduits } from '@/modules/stock/logic'
 import { AdherentPicker } from '@/modules/adherents/components/AdherentPicker'
-import { useArticles, useCreerCordage, useEnregistrerVente, useOffresCordage, usePaiement, useVariantes } from '../api'
-import { MOYENS, fmtEuro, libelleMoyen, libelleStatut, prixVariante, stockVariante } from '../logic'
+import { useCreerCordage, useEnregistrerVente, useOffresCordage, usePaiement } from '../api'
+import { MOYENS, fmtEuro, libelleMoyen, libelleStatut } from '../logic'
 
 export function StatutBadge({ statut }: { statut: StatutCordage }) {
   const tone = statut === 'deposee' ? 'orange' : statut === 'cordee' ? 'blue' : 'green'
@@ -60,35 +61,34 @@ export function PaiementCell({ table, id, paye, moyen, montant, disabled }: {
 // Saisie d'une vente
 // ---------------------------------------------------------------------
 export function VenteForm({ open, onClose, adherentId }: { open: boolean; onClose: () => void; adherentId?: string }) {
-  const articles = (useArticles().data ?? []).filter(a => a.actif)
-  const variantes = (useVariantes().data ?? []).filter(v => v.actif)
   const stockList = useStockProduits().data
-  const stock = useMemo(() => new Map((stockList ?? []).map(s => [s.id, s])), [stockList])
+  // Produits proposés à la vente, tailles regroupées
+  const groupes = useMemo(() => grouperProduits((stockList ?? []).filter(estVendu)), [stockList])
   const vendre = useEnregistrerVente()
   const toast = useToast()
-  const init = { adherent: adherentId ?? '', article: '', variante: '', quantite: '1', prix: '', paye: false, moyen: 'especes' as MoyenPaiement, note: '' }
+  const init = { adherent: adherentId ?? '', groupe: '', produit: '', quantite: '1', prix: '', paye: false, moyen: 'especes' as MoyenPaiement, note: '' }
   const [f, setF] = useState(init)
   const [wasOpen, setWasOpen] = useState(false)
   if (open !== wasOpen) { setWasOpen(open); if (open) setF({ ...init }) }
 
-  const article = articles.find(a => a.id === f.article)
-  const vars = variantes.filter(v => v.article_id === f.article)
-  const variante = vars.find(v => v.id === f.variante) ?? (vars.length === 1 ? vars[0] : undefined)
-  const dispo = variante ? stockVariante(variante, stock) : null
-  const prix = f.prix !== '' ? Number(f.prix) : article && variante ? prixVariante(article, variante) : 0
+  const groupe = groupes.find(g => g.cle === f.groupe)
+  const tailles = groupe?.produits ?? []
+  const produit = tailles.find(p => p.id === f.produit) ?? (groupe && !groupe.modele ? tailles[0] : undefined)
+  const dispo = produit ? Number(produit.stock_valide) : null
+  const prix = f.prix !== '' ? Number(f.prix) : produit ? Number(produit.prix_vente) : 0
   const total = prix * (Number(f.quantite) || 0)
 
-  function choisirArticle(id: string) {
-    const vs = variantes.filter(v => v.article_id === id)
-    setF({ ...f, article: id, variante: vs.length === 1 ? vs[0].id : '', prix: '' })
+  function choisirGroupe(cle: string) {
+    const g = groupes.find(x => x.cle === cle)
+    setF({ ...f, groupe: cle, produit: g && g.produits.length === 1 ? g.produits[0].id : '', prix: '' })
   }
 
   async function submit(e: FormEvent) {
     e.preventDefault()
     if (!f.adherent) return toast('Choisissez un adhérent', 'err')
-    if (!variante) return toast(vars.length ? 'Choisissez une taille / variante' : "Cet article n'a aucune variante : configurez-le dans Articles", 'err')
+    if (!produit) return toast('Choisissez une taille', 'err')
     try {
-      await vendre.mutateAsync({ adherent: f.adherent, variante: variante.id, quantite: Number(f.quantite), prix, paye: f.paye, moyen: f.paye ? f.moyen : '', note: f.note })
+      await vendre.mutateAsync({ adherent: f.adherent, produit: produit.id, quantite: Number(f.quantite), prix, paye: f.paye, moyen: f.paye ? f.moyen : '', note: f.note })
       toast('Vente enregistrée'); onClose()
     } catch (err) { toast(errMsg(err), 'err') }
   }
@@ -97,35 +97,35 @@ export function VenteForm({ open, onClose, adherentId }: { open: boolean; onClos
     <Modal open={open} onClose={onClose} title="Nouvelle vente">
       <form onSubmit={submit} className="space-y-4">
         <Field label="Adhérent" group><AdherentPicker value={f.adherent} onChange={id => setF({ ...f, adherent: id })} autoFocus={!adherentId} /></Field>
-        <Field label="Article">
-          <select className="input" required value={f.article} onChange={e => choisirArticle(e.target.value)}>
+        <Field label="Article" hint={groupes.length ? undefined : 'Aucun produit en vente : donnez un prix de vente à un produit dans Stock › Produits.'}>
+          <select className="input" required value={f.groupe} onChange={e => choisirGroupe(e.target.value)}>
             <option value="">— Choisir —</option>
-            {articles.map(a => <option key={a.id} value={a.id}>{a.nom}{a.categorie ? ` (${a.categorie})` : ''}</option>)}
+            {groupes.map(g => <option key={g.cle} value={g.cle}>{g.nom} · {fmtEuro(g.produits[0].prix_vente)}</option>)}
           </select>
         </Field>
-        {vars.length > 1 && (
-          <Field label="Taille / variante" group>
+        {groupe?.modele && (
+          <Field label="Taille" group>
             <div className="flex flex-wrap gap-1.5">
-              {vars.map(v => {
-                const s = stockVariante(v, stock)
-                const vide = s !== null && s <= 0
+              {tailles.map(p => {
+                const s = Number(p.stock_valide)
+                const vide = s <= 0
                 return (
-                  <button type="button" key={v.id} disabled={vide} onClick={() => setF({ ...f, variante: v.id, prix: '' })}
-                    className={`chip border px-3 py-1.5 text-sm ${f.variante === v.id ? 'border-aasc-orange bg-aasc-orange/25 text-white' : 'border-white/10 text-slate-300 hover:bg-white/5'} ${vide ? 'opacity-40 line-through' : ''}`}>
-                    {v.libelle || '—'}{s !== null && <span className="ml-1 text-xs text-slate-400">({fmtQ(s)})</span>}
+                  <button type="button" key={p.id} disabled={vide} onClick={() => setF({ ...f, produit: p.id, prix: '' })}
+                    className={`chip border px-3 py-1.5 text-sm ${f.produit === p.id ? 'border-aasc-orange bg-aasc-orange/25 text-white' : 'border-white/10 text-slate-300 hover:bg-white/5'} ${vide ? 'opacity-40 line-through' : ''}`}>
+                    {p.taille || '—'}<span className="ml-1 text-xs text-slate-400">({fmtQ(s)})</span>
                   </button>
                 )
               })}
             </div>
           </Field>
         )}
-        {variante && dispo !== null && (
+        {produit && dispo !== null && (
           <p className={`text-sm ${dispo < (Number(f.quantite) || 0) ? 'text-red-300' : 'text-slate-400'}`}>En stock : {fmtQ(dispo)}</p>
         )}
         <div className="grid grid-cols-2 gap-3">
           <Field label="Quantité"><input className="input" type="number" min={1} step={1} required value={f.quantite} onChange={e => setF({ ...f, quantite: e.target.value })} /></Field>
           <Field label="Prix unitaire (€)" hint="Pré-rempli, modifiable">
-            <input className="input" type="number" min={0} step="0.01" value={f.prix !== '' ? f.prix : (article && variante ? String(prix) : '')}
+            <input className="input" type="number" min={0} step="0.01" value={f.prix !== '' ? f.prix : (produit ? String(prix) : '')}
               onChange={e => setF({ ...f, prix: e.target.value })} />
           </Field>
         </div>

@@ -20,6 +20,10 @@ export interface Caisse {
 export interface Produit {
   id: string; designation: string; categorie_id: string | null
   unite: string; seuil_min: number; actif: boolean
+  /** null = pas vendu en boutique */
+  prix_vente: number | null
+  /** Regroupe les tailles d'un même produit (ex. « Maillot club ») ; vide = produit simple */
+  modele: string; taille: string; ordre: number
 }
 
 export interface Lot {
@@ -38,6 +42,7 @@ export interface Mouvement {
 export interface StockProduit {
   id: string; designation: string; categorie_id: string | null; unite: string; seuil_min: number; actif: boolean
   stock_valide: number; stock_perime: number; prochaine_peremption: string | null; nb_lots: number
+  prix_vente: number | null; modele: string; taille: string; ordre: number
 }
 
 export interface Peremption {
@@ -59,19 +64,13 @@ export interface Adherent {
   saison: string; actif: boolean; created_at: string; updated_at: string
 }
 
-export interface Article {
-  id: string; nom: string; categorie: string; description: string; prix: number; actif: boolean; ordre: number
-}
-export interface ArticleVariante {
-  id: string; article_id: string; libelle: string; produit_id: string | null; prix: number | null; actif: boolean; ordre: number
-}
 export interface OffreCordage { id: string; nom: string; prix: number; produit_id: string | null; actif: boolean; ordre: number }
 
 export type MoyenPaiement = '' | 'especes' | 'cheque' | 'virement'
 export type StatutCordage = 'deposee' | 'cordee' | 'rendue'
 
 export interface Vente {
-  id: string; adherent_id: string | null; variante_id: string | null; libelle: string
+  id: string; adherent_id: string | null; produit_id: string | null; libelle: string
   quantite: number; prix_unitaire: number; total: number
   paye: boolean; moyen_paiement: MoyenPaiement; paye_le: string | null; note: string
   annulee: boolean; user_id: string | null; created_at: string

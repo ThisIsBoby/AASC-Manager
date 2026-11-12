@@ -10,7 +10,7 @@ import { EmptyState, Field, Modal, PageHeader, Spinner, fmtQ, useToast } from '@
 import { useCaisse, useCaisses, useCreerLot, useDelete, useLots, useMouvement, useProduits, useTransfert, useUpdateLotInfos } from '../api'
 import { CategorieTag, EtiquetteCaisse, PeremptionBadge, fmtDate, useRefs } from '../components/shared'
 import { CaisseForm } from './CaissesPage'
-import { ProduitForm } from './ProduitsPage'
+import { ProduitForm } from '../components/produitForms'
 
 type Dialog =
   | { kind: 'add' }
