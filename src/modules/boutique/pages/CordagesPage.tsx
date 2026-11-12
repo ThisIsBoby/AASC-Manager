@@ -17,8 +17,11 @@ export function CordagesPage() {
   const [offres, setOffres] = useState(false)
 
   const all = cordages.data ?? []
+  // « À payer » montre tous les impayés, y compris les raquettes déjà rendues,
+  // sauf si un statut précis est choisi
+  const statutFiltre = paye === 'non' && statut === 'en_cours' ? '' : statut
   const list = all.filter(c =>
-    (statut === '' || (statut === 'en_cours' ? c.statut !== 'rendue' : c.statut === statut)) &&
+    (statutFiltre === '' || (statutFiltre === 'en_cours' ? c.statut !== 'rendue' : c.statut === statutFiltre)) &&
     (paye === '' || (paye === 'oui' ? c.paye || Number(c.prix) === 0 : !c.paye && Number(c.prix) > 0)))
 
   return (
