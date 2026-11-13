@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Minus, Plus, Printer, Scissors } from 'lucide-react'
 import { PageHeader } from '@/core/ui'
 import { CARTES_PAR_PAGE, TAILLE_CARTE, VALEURS_CARTE, VALEUR_CASE, colonnesCases, fmtPrix, nbCases, planchesCartes, type ValeurCarte } from '../buvette'
+import { useEchelleFeuille } from '../components/echelle'
 import '../cartes.css'
 
 const CLE = 'aasc-cartes-buvette'
@@ -20,6 +21,10 @@ export function CartesBuvettePage() {
   const [quantites, setQuantites] = useState(quantitesEnregistrees)
   const pages = planchesCartes(quantites)
   const total = quantites[5] + quantites[10]
+  const scene = useRef<HTMLDivElement>(null)
+
+  // La feuille est dessinée sur 2100 px de large (210 mm × 10 px) puis réduite à la largeur de l'aperçu
+  useEchelleFeuille(scene, 2100)
 
   function changer(v: ValeurCarte, n: number) {
     const q = { ...quantites, [v]: Math.max(0, Math.min(400, Math.round(n) || 0)) }
@@ -55,13 +60,13 @@ export function CartesBuvettePage() {
         </p>
       </div>
 
-      <div className="cb-stage">
+      <div className="cb-stage" ref={scene}>
         {pages.map((cartes, i) => (
-          <div key={i} className="cb-page" aria-label={`Feuille ${i + 1} sur ${pages.length}`}>
+          <div key={i} className="cb-frame"><div className="cb-page" aria-label={`Feuille ${i + 1} sur ${pages.length}`}>
             {Array.from({ length: CARTES_PAR_PAGE }, (_, j) => (
               <div key={j} className="cb-slot">{cartes[j] != null && <CarteBuvette valeur={cartes[j]} />}</div>
             ))}
-          </div>
+          </div></div>
         ))}
       </div>
     </div>
