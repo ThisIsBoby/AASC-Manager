@@ -39,3 +39,33 @@ export function resteAPayer(ventes: Pick<Vente, 'adherent_id' | 'paye' | 'annule
 
 export const fmtEuro = (n: number | null | undefined) =>
   n == null ? '–' : Number(n).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: Number(n) % 1 ? 2 : 0 })
+
+/** Impayés (ventes + cordages) d'un adhérent : une relance = un seul e-mail */
+export interface ImpayesAdherent {
+  adherent_id: string
+  ventes: Vente[]
+  cordages: Cordage[]
+  montant: number
+  /** Date de la relance la plus récente parmi ses lignes impayées */
+  derniereRelance: string | null
+}
+
+/** Regroupe les lignes restant à payer par adhérent, du plus gros montant au plus petit */
+export function impayesParAdherent(ventes: Vente[], cordages: Cordage[]): ImpayesAdherent[] {
+  const m = new Map<string, ImpayesAdherent>()
+  const get = (id: string | null) => {
+    const k = id ?? ''
+    let g = m.get(k)
+    if (!g) m.set(k, g = { adherent_id: k, ventes: [], cordages: [], montant: 0, derniereRelance: null })
+    return g
+  }
+  const relance = (g: ImpayesAdherent, d: string | null) => { if (d && (!g.derniereRelance || d > g.derniereRelance)) g.derniereRelance = d }
+  ventes.forEach(v => { const du = venteDue(v); if (du > 0) { const g = get(v.adherent_id); g.ventes.push(v); g.montant += du; relance(g, v.relance_le) } })
+  cordages.forEach(c => { const du = cordageDu(c); if (du > 0) { const g = get(c.adherent_id); g.cordages.push(c); g.montant += du; relance(g, c.relance_le) } })
+  return [...m.values()]
+    .map(g => ({ ...g, montant: Math.round(g.montant * 100) / 100 }))
+    .sort((a, b) => b.montant - a.montant)
+}
+
+/** Relancé il y a moins de 24 h ? (évite les doublons) */
+export const relanceRecente = (d: string | null, now = Date.now()) => d != null && now - new Date(d).getTime() < 24 * 3600 * 1000

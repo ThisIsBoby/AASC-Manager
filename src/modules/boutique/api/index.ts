@@ -86,3 +86,31 @@ export function usePaiement(table: 'ventes' | 'cordages') {
     onSuccess: () => qc.invalidateQueries({ queryKey: [table] }),
   })
 }
+
+// ---------------- Relances ----------------
+export interface ResultatRelance {
+  envoyes: { adherent_id: string; email: string; montant: number }[]
+  sans_email: string[]
+  erreurs: { adherent_id: string; message: string }[]
+}
+
+/** Envoie un e-mail de relance (un par adhérent) via la fonction Edge « relance-paiements » */
+export function useRelancer() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (p: { adherentIds: string[]; message?: string }) => {
+      const { data, error } = await supabase.functions.invoke<ResultatRelance>('relance-paiements', {
+        body: { adherent_ids: p.adherentIds, message: p.message ?? '' },
+      })
+      if (error) {
+        // Le corps de la réponse porte le message d'erreur de la fonction
+        const ctx = (error as { context?: Response }).context
+        const detail = ctx && typeof ctx.json === 'function' ? await ctx.json().catch(() => null) : null
+        throw new Error(detail?.error ?? (error.message.includes('Failed to send') || error.message.includes('not found')
+          ? 'Fonction « relance-paiements » injoignable : est-elle déployée sur Supabase ?' : error.message))
+      }
+      return data as ResultatRelance
+    },
+    onSuccess: () => Promise.all(['ventes', 'cordages'].map(k => qc.invalidateQueries({ queryKey: [k] }))),
+  })
+}
