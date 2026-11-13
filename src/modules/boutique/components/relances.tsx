@@ -7,8 +7,8 @@ import { Field, Modal, useToast } from '@/core/ui'
 import { fmtDate } from '@/modules/stock/components/shared'
 import { useAdherentsMap } from '@/modules/adherents/api'
 import { nomComplet } from '@/modules/adherents/logic'
-import { useRelancer, type ResultatRelance } from '../api'
-import { fmtEuro, relanceRecente, type ImpayesAdherent } from '../logic'
+import { useCordages, useRelancer, useVentes, type ResultatRelance } from '../api'
+import { fmtEuro, impayesParAdherent, relanceRecente, type ImpayesAdherent } from '../logic'
 import { PaiementCell } from './shared'
 
 const emailValide = (a?: Adherent) => Boolean(a && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a.email.trim()))
@@ -29,7 +29,7 @@ function resume(g: ImpayesAdherent) {
 }
 
 /** Bouton « Relancer » d'un adhérent : un seul e-mail pour tous ses impayés */
-function BoutonRelance({ groupe, adherent }: { groupe: ImpayesAdherent; adherent?: Adherent }) {
+function BoutonRelance({ groupe, adherent, compact }: { groupe: ImpayesAdherent; adherent?: Adherent; compact?: boolean }) {
   const relancer = useRelancer()
   const toast = useToast()
   const ok = emailValide(adherent)
@@ -47,11 +47,24 @@ function BoutonRelance({ groupe, adherent }: { groupe: ImpayesAdherent; adherent
   }
 
   return (
-    <button className="btn-ghost gap-1.5 px-2.5 py-1.5 text-sm" disabled={!ok || relancer.isPending} onClick={envoyer}
-      title={ok ? 'Envoyer un e-mail de relance' : 'Pas d\'adresse e-mail valide sur la fiche adhérent'}>
-      <Mail size={15} /><span className="hidden sm:inline">Relancer</span>
+    <button className={compact ? 'chip border border-white/10 text-slate-300 hover:bg-white/5 disabled:opacity-40' : 'btn-ghost gap-1.5 px-2.5 py-1.5 text-sm'}
+      disabled={!ok || relancer.isPending} onClick={e => { e.stopPropagation(); envoyer() }}
+      title={ok ? `Relancer par e-mail (${fmtEuro(groupe.montant)} au total)` : 'Pas d\'adresse e-mail valide sur la fiche adhérent'}>
+      <Mail size={compact ? 13 : 15} />{compact ? <span>Relancer</span> : <span className="hidden sm:inline">Relancer</span>}
     </button>
   )
+}
+
+/** Bouton « Relancer » sur une ligne « À payer » : relance l'adhérent pour l'ensemble de ses impayés */
+export function BoutonRelanceLigne({ adherentId }: { adherentId: string | null }) {
+  const ventes = useVentes().data
+  const cordages = useCordages().data
+  const adherent = useAdherentsMap().get(adherentId ?? '')
+  const groupe = useMemo(() => adherentId
+    ? impayesParAdherent((ventes ?? []).filter(v => v.adherent_id === adherentId), (cordages ?? []).filter(c => c.adherent_id === adherentId))[0]
+    : undefined, [adherentId, ventes, cordages])
+  if (!groupe || !adherent) return null
+  return <BoutonRelance groupe={groupe} adherent={adherent} compact />
 }
 
 /** Impayés regroupés par adhérent : une ligne par personne, dépliable pour encaisser ligne à ligne */

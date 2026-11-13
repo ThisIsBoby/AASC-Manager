@@ -69,7 +69,14 @@ export function VentesPage() {
       </div>
       {ventes.isLoading ? <Spinner /> : paye === 'non'
         ? groupes.length ? <ImpayesParAdherentTable groupes={groupes} /> : <EmptyState title="Aucun impayé" />
-        : list.length ? <VentesTable ventes={list} /> : <EmptyState title="Aucune vente" />}
+        : <>
+          {tousImpayes.length > 0 && (
+            <p className="mb-2 text-sm text-slate-400">
+              <button className="text-aasc-orange-soft hover:underline" onClick={() => setPaye('non')}>Voir les impayés regroupés par adhérent</button>
+            </p>
+          )}
+          {list.length ? <VentesTable ventes={list} /> : <EmptyState title="Aucune vente" />}
+        </>}
       {paye !== 'non' && cordagesDus.length > 0 && (
         <section className="mt-6">
           <h2 className="title-sport mb-2 text-xl">Cordages à payer <span className="text-sm font-normal text-slate-400">({fmtEuro(duCordages)})</span></h2>
