@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowDown, ArrowUp, Coffee, Cookie, CopyPlus, CupSoda, Eye, EyeOff, Image, PackagePlus, Plus, Sandwich, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, Coffee, Cookie, CopyPlus, CupSoda, Eye, EyeOff, Image, PackagePlus, Plus, Sandwich, Trash2, WalletCards } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { errMsg } from '@/core/supabase'
 import type { BuvetteLigne, RubriqueBuvette, Tournoi } from '@/core/types'
@@ -48,7 +48,8 @@ export function BuvetteFiche({ t }: { t: Tournoi }) {
       ) : <>
         <div className="no-print mb-4 flex flex-wrap items-center gap-2">
           {actions}
-          <Link to={`/tournois/${t.id}/buvette`} className="btn-secondary sm:ml-auto"><Image size={16} /> Affiche ({visibles} produit{visibles > 1 ? 's' : ''})</Link>
+          <Link to="/tournois/cartes-buvette" className="btn-ghost sm:ml-auto"><WalletCards size={16} /> Cartes buvette</Link>
+          <Link to={`/tournois/${t.id}/buvette`} className="btn-secondary"><Image size={16} /> Affiche ({visibles} produit{visibles > 1 ? 's' : ''})</Link>
         </div>
         <p className="mb-4 text-sm text-slate-400">Les prix saisis ici valent pour cet événement : le prix de vente du produit dans le stock ne change pas. L'œil masque un produit de l'affiche sans le supprimer.</p>
         <div className="grid gap-4 lg:grid-cols-2">

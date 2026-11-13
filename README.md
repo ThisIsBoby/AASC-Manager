@@ -100,6 +100,7 @@ on les range par rubrique (Boissons fraîches, Boissons chaudes, Salé, Sucré) 
 *Affiche* ouvre l'affiche aux couleurs du club, fond blanc pour économiser l'encre, à imprimer en **A4** (comptoir)
 ou **A3** (mur, visible de loin). Dans la fenêtre d'impression, choisir le même format de papier, échelle 100 %.
 Le texte s'adapte au nombre de produits ; s'il devait devenir trop petit, l'affiche passe sur 2 pages (sans couper une rubrique).
+*Événements › Cartes buvette* imprime les cartes prépayées de 5 € (10 cases) et 10 € (20 cases) de 0,50 € : 8 cartes de 105 × 74 mm par feuille A4, à découper, papier A4, échelle 100 %, sans marges.
 
 ## Boutique, cordage et adhérents
 - **Une seule base : Stock › Produits.** Stock, seuil, prix de vente et tailles se gèrent au même endroit.
