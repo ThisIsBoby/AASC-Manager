@@ -28,7 +28,7 @@ Les droits sont appliqués dans la base (Row Level Security), pas seulement dans
 
 ### 1. Supabase
 1. Créer un compte sur <https://supabase.com> puis un **nouveau projet** (région Europe).
-2. *SQL Editor* → coller et exécuter `supabase/migrations/0001_init.sql`, puis `supabase/migrations/0002_checklist.sql` (checklists de tournoi), puis `supabase/migrations/0003_boutique.sql` (adhérents, boutique, cordage), puis `supabase/migrations/0004_produits_unifies.sql` (une seule base Produits pour le stock et la boutique), puis `supabase/migrations/0005_tournoi_type.sql` (type Tournoi / Interclub), puis `supabase/migrations/0006_type_evenement.sql` (type Événement), puis `supabase/migrations/0007_inventaire.sql` (inventaires : comptage des caisses et écarts).
+2. *SQL Editor* → coller et exécuter `supabase/migrations/0001_init.sql`, puis `supabase/migrations/0002_checklist.sql` (checklists de tournoi), puis `supabase/migrations/0003_boutique.sql` (adhérents, boutique, cordage), puis `supabase/migrations/0004_produits_unifies.sql` (une seule base Produits pour le stock et la boutique), puis `supabase/migrations/0005_tournoi_type.sql` (type Tournoi / Interclub), puis `supabase/migrations/0006_type_evenement.sql` (type Événement), puis `supabase/migrations/0007_inventaire.sql` (inventaires : comptage des caisses et écarts), puis `supabase/migrations/0008_relances.sql` (date de relance des impayés).
 3. (Optionnel) exécuter `supabase/seed.sql` pour des produits, caisses et un modèle de tournoi d'exemple.
 4. *Authentication → URL Configuration* :
    - **Site URL** : `https://<votre-compte>.github.io/<nom-du-depot>/`
@@ -61,6 +61,22 @@ appelle chaque jour la fonction `keep_alive()` (elle écrit une ligne dans la ta
 - Si le workflow échoue, GitHub vous envoie un e-mail : vérifiez que le projet Supabase n'est pas en pause.
 - GitHub désactive les workflows planifiés d'un dépôt public après **60 jours sans commit** :
   réactivez-le d'un clic dans l'onglet *Actions* (ou faites un commit).
+
+### 5. Relances des impayés par e-mail (optionnel)
+Dans *Boutique → Ventes*, le filtre « À payer » regroupe les impayés (ventes + cordages) **par adhérent**, avec un bouton
+**Relancer** par personne ; « Relancer les impayés » envoie la relance à tous en une fois. Chaque adhérent reçoit **un seul
+e-mail** récapitulant tout ce qu'il doit, et la date de relance est enregistrée. L'envoi passe par
+la fonction Edge `supabase/functions/relance-paiements` et le service [Resend](https://resend.com) (offre gratuite : 3 000 mails/mois).
+1. Créer un compte Resend, **vérifier un domaine** (sans domaine vérifié, Resend n'envoie qu'à l'adresse du compte) et créer une clé API.
+2. Avec la [CLI Supabase](https://supabase.com/docs/guides/cli) :
+   ```bash
+   supabase login
+   supabase link --project-ref <ref-du-projet>
+   supabase functions deploy relance-paiements
+   supabase secrets set RESEND_API_KEY=re_xxx RELANCE_FROM="AASC Badminton <relances@mondomaine.fr>" RELANCE_REPLY_TO=tresorier@mondomaine.fr
+   ```
+   (`RELANCE_REPLY_TO` est facultatif : adresse qui reçoit les réponses des adhérents.)
+3. Seuls les comptes **actifs** peuvent déclencher une relance (vérifié dans la fonction). Les adhérents sans e-mail sur leur fiche sont ignorés.
 
 ---
 

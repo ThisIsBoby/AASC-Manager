@@ -100,14 +100,14 @@ export interface Vente {
   id: string; adherent_id: string | null; produit_id: string | null; libelle: string
   quantite: number; prix_unitaire: number; total: number
   paye: boolean; moyen_paiement: MoyenPaiement; paye_le: string | null; note: string
-  annulee: boolean; user_id: string | null; created_at: string
+  annulee: boolean; relance_le: string | null; user_id: string | null; created_at: string
 }
 export interface Cordage {
   id: string; adherent_id: string | null; offre_id: string | null; offre_nom: string; prix: number
   raquette: string; cordage_ref: string; tension: string; statut: StatutCordage
   depose_le: string; corde_le: string | null; rendu_le: string | null; stock_sorti: boolean
   paye: boolean; moyen_paiement: MoyenPaiement; paye_le: string | null; note: string
-  user_id: string | null; created_at: string
+  relance_le: string | null; user_id: string | null; created_at: string
 }
 
 export interface ModeleChecklist { id: string; nom: string; description: string }
