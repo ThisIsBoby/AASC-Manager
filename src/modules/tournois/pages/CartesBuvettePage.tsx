@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Minus, Plus, Printer, Scissors } from 'lucide-react'
 import { PageHeader } from '@/core/ui'
-import { CARTES_PAR_PAGE, VALEURS_CARTE, VALEUR_CASE, fmtPrix, nbCases, planchesCartes, type ValeurCarte } from '../buvette'
+import { CARTES_PAR_PAGE, TAILLE_CARTE, VALEURS_CARTE, VALEUR_CASE, colonnesCases, fmtPrix, nbCases, planchesCartes, type ValeurCarte } from '../buvette'
 import '../cartes.css'
 
 const CLE = 'aasc-cartes-buvette'
@@ -13,7 +13,7 @@ function quantitesEnregistrees(): Record<ValeurCarte, number> {
     const q = JSON.parse(localStorage.getItem(CLE) ?? '')
     if (Number.isInteger(q?.[5]) && Number.isInteger(q?.[10])) return { 5: q[5], 10: q[10] }
   } catch { /* rien d'enregistré */ }
-  return { 5: 4, 10: 4 }
+  return { 5: 5, 10: 5 }
 }
 
 export function CartesBuvettePage() {
@@ -46,7 +46,7 @@ export function CartesBuvettePage() {
             </div>
           ))}
           <p className="flex items-center gap-2 pb-2 text-sm text-slate-400">
-            <Scissors size={16} /> {CARTES_PAR_PAGE} cartes de 105 × 74 mm par feuille A4, à découper le long des pointillés.
+            <Scissors size={16} /> Format carte de visite : {CARTES_PAR_PAGE} cartes de {TAILLE_CARTE.largeur} × {TAILLE_CARTE.hauteur} mm par feuille A4, à découper le long des pointillés.
           </p>
         </div>
         <p className="mb-4 text-sm text-slate-400">
@@ -85,11 +85,11 @@ export function CarteBuvette({ valeur }: { valeur: ValeurCarte }) {
         </div>
         <div className="cb-value">{valeur}<small>€</small></div>
       </div>
-      <div className="cb-grid" style={{ gridTemplateRows: `repeat(${Math.ceil(cases / 5)}, 1fr)` }}>
+      <div className="cb-grid" style={{ gridTemplateColumns: `repeat(${colonnesCases(cases)}, 1fr)` }}>
         {Array.from({ length: cases }, (_, i) => <div key={i} className="cb-box"><span>{fmtPrix(VALEUR_CASE)} €</span></div>)}
       </div>
       <div className="cb-foot">
-        <span><b>1 case = {fmtPrix(VALEUR_CASE)} €</b> · cochée à chaque achat</span>
+        <span><b>1 case = {fmtPrix(VALEUR_CASE)} €</b>, cochée à chaque achat</span>
         <span className="cb-num">N°<i /></span>
       </div>
     </div>

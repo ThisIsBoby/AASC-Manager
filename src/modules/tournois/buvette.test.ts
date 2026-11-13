@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { BuvetteLigne, Produit, RubriqueBuvette } from '@/core/types'
-import { articlesStock, copierLignes, echelleCarte, fmtPrix, grouperBuvette, nbCases, ordreSuivant, paginer, planchesCartes, repartirColonnes, rubriqueSuggeree } from './buvette'
+import { articlesStock, colonnesCases, copierLignes, echelleCarte, fmtPrix, grouperBuvette, nbCases, ordreSuivant, paginer, planchesCartes, repartirColonnes, rubriqueSuggeree } from './buvette'
 
 const l = (libelle: string, rubrique: RubriqueBuvette, ordre = 0, visible = true): BuvetteLigne =>
   ({ id: libelle, tournoi_id: 't', produit_id: null, libelle, rubrique, prix: 1, ordre, visible, created_at: '' })
@@ -77,8 +77,10 @@ describe('buvette', () => {
   it('prépare les feuilles de cartes buvette', () => {
     expect(nbCases(10)).toBe(20)
     expect(nbCases(5)).toBe(10)
-    expect(planchesCartes({ 5: 3, 10: 6 }).map(p => p.join(','))).toEqual(['5,5,5,10,10,10,10,10', '10'])
-    expect(planchesCartes({ 10: 8 }).length).toBe(1)
+    expect(colonnesCases(20)).toBe(10)
+    expect(colonnesCases(10)).toBe(5)
+    expect(planchesCartes({ 5: 4, 10: 7 }).map(p => p.join(','))).toEqual(['5,5,5,5,10,10,10,10,10,10', '10'])
+    expect(planchesCartes({ 10: 10 }).length).toBe(1)
     expect(planchesCartes({ 5: 0, 10: -2 })).toEqual([])
   })
 })
