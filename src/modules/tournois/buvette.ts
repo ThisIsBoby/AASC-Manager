@@ -124,3 +124,26 @@ export function copierLignes(source: BuvetteLigne[], tournoiId: string) {
 /** Ordre à donner à une nouvelle ligne : à la fin de sa rubrique */
 export const ordreSuivant = (lignes: Pick<BuvetteLigne, 'rubrique' | 'ordre'>[], rubrique: RubriqueBuvette) =>
   lignes.filter(l => l.rubrique === rubrique).reduce((m, l) => Math.max(m, l.ordre + 1), 0)
+
+// ---------------- Cartes buvette ----------------
+/** Montants des cartes vendues et valeur d'une case à cocher */
+export const VALEURS_CARTE = [5, 10] as const
+export type ValeurCarte = (typeof VALEURS_CARTE)[number]
+export const VALEUR_CASE = 0.5
+/** Format carte de visite : 10 cartes de 85 × 52 mm par feuille A4 (2 colonnes × 5 rangées) */
+export const CARTES_PAR_PAGE = 10
+export const TAILLE_CARTE = { largeur: 85, hauteur: 52 }
+
+/** Cases sur 2 rangées : 5 colonnes pour 10 cases, 10 colonnes pour 20 */
+export const colonnesCases = (cases: number) => Math.ceil(cases / 2)
+
+/** Nombre de cases d'une carte : 10 € → 20 cases de 0,50 € */
+export const nbCases = (valeur: number) => Math.round(valeur / VALEUR_CASE)
+
+/** Répartit les cartes à imprimer en feuilles A4, les 5 € d'abord */
+export function planchesCartes(quantites: Partial<Record<ValeurCarte, number>>, parPage = CARTES_PAR_PAGE): ValeurCarte[][] {
+  const cartes = VALEURS_CARTE.flatMap(v => Array<ValeurCarte>(Math.max(0, Math.floor(quantites[v] ?? 0))).fill(v))
+  const pages: ValeurCarte[][] = []
+  for (let i = 0; i < cartes.length; i += parPage) pages.push(cartes.slice(i, i + parPage))
+  return pages
+}
