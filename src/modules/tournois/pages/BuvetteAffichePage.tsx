@@ -8,6 +8,7 @@ import { fmtDate } from '@/modules/stock/components/shared'
 import { useBuvetteLignes } from '../api'
 import { FORMATS, echelleCarte, fmtPrix, grouperBuvette, paginer, poidsMaxColonnes, repartirColonnes, type FormatAffiche, type Section } from '../buvette'
 import { ICONES_RUBRIQUE } from '../components/BuvetteFiche'
+import { useEchelleFeuille } from '../components/echelle'
 import '../affiche.css'
 
 const CLE = 'aasc-buvette-format'
@@ -69,8 +70,11 @@ export function BuvetteAffichePage() {
 
 export function AfficheBuvette({ t, lignes, format }: { t: Tournoi; lignes: BuvetteLigne[]; format: FormatAffiche }) {
   const pages = paginer(grouperBuvette(lignes, true))
+  const scene = useRef<HTMLDivElement>(null)
+  // La feuille est dessinée sur 2380 px de large puis réduite à la largeur de l'aperçu
+  useEchelleFeuille(scene, 2380)
   return (
-    <div className={`bv-stage ${format === 'a3' ? 'bv-a3' : ''}`}>
+    <div ref={scene} className={`bv-stage ${format === 'a3' ? 'bv-a3' : ''}`}>
       {pages.length > 1 && <p className="no-print mb-3 text-center text-sm text-slate-400">
         Trop de produits pour une seule page lisible de loin : l'affiche tient sur {pages.length} pages.
       </p>}
@@ -99,7 +103,7 @@ function Feuille({ t, sections, format, page }: { t: Tournoi; sections: Section<
   const date = t.date ? fmtDate(t.date, 'EEE d MMMM yyyy') : ''
 
   return (
-      <article className="bv-sheet" style={{ '--k': k } as CSSProperties} aria-label={`Affiche buvette ${FORMATS[format].nom}${page ? `, page ${page}` : ''}`}>
+      <div className="bv-frame"><article className="bv-sheet" style={{ '--k': k } as CSSProperties} aria-label={`Affiche buvette ${FORMATS[format].nom}${page ? `, page ${page}` : ''}`}>
         <div className="bv-streaks top" aria-hidden>
           <i className="bv-o" style={{ left: '4%', top: '18%', width: '46%' }} />
           <i className="bv-b" style={{ left: '14%', top: '34%', width: '58%' }} />
@@ -149,7 +153,7 @@ function Feuille({ t, sections, format, page }: { t: Tournoi; sections: Section<
           <p className="bv-thanks">Merci ! Chaque achat soutient le club.</p>
         </footer>
         {page && <span className="bv-page">{page}</span>}
-      </article>
+      </article></div>
   )
 }
 

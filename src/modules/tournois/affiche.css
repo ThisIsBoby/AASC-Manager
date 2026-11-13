@@ -1,23 +1,26 @@
 /* =====================================================================
    Affiche buvette : feuille blanche aux couleurs du club.
    Toutes les tailles sont en --mm, unité de dessin : la feuille fait 238 × 336,6 --mm
-   (proportions A4/A3). À l'écran, --mm suit la largeur de l'aperçu ; à l'impression,
-   la feuille fait exactement 210 × 297 mm (A4) ou 297 × 420 mm (A3) : même mise en page, agrandie.
+   (proportions A4/A3). Elle est dessinée en grand (--mm = 10 px, soit 2380 × 3366 px) puis
+   réduite d'un bloc (transform: scale) à la largeur de l'aperçu, ou à 210 × 297 mm (A4) /
+   297 × 420 mm (A3) à l'impression. Les petits textes ne passent ainsi jamais sous la taille
+   de police minimum du navigateur, qui les ferait grossir et déborder.
    ===================================================================== */
-.bv-stage { container-type: inline-size; width: 70.7%; max-width: 900px; margin: 0 auto; transition: width .3s ease; }
+.bv-stage { --s: .3; width: 70.7%; max-width: 900px; margin: 0 auto; transition: width .3s ease; }
 .bv-stage.bv-a3 { width: 100%; }
-.bv-sheet + .bv-sheet { margin-top: 24px; }
+.bv-frame { position: relative; width: 100%; aspect-ratio: 210 / 297; overflow: hidden; background: #FFFFFF; box-shadow: 0 18px 50px -20px rgba(0,0,0,.6); }
+.bv-frame + .bv-frame { margin-top: 24px; }
 .bv-page { position: absolute; right: calc(14 * var(--mm)); bottom: calc(4 * var(--mm)); font-size: calc(3 * var(--mm)); color: var(--muted); font-variant-numeric: tabular-nums; }
 
 .bv-sheet {
-  --mm: calc(100cqw / 238);
+  --mm: 10px;
   --k: 1;
   --paper: #FFFFFF; --ink: #0E1A2E; --muted: #5B6678; --rule: #C9D1DD;
   --orange: #EE7D1F; --orange-deep: #E8641A; --blue: #1A5A9A; --blue-light: #2E7BC4;
-  position: relative; overflow: hidden; width: 100%; aspect-ratio: 210 / 297;
+  position: absolute; left: 0; top: 0; overflow: hidden; width: 2380px; height: 3366px;
+  transform-origin: 0 0; transform: scale(var(--s));
   --kh: min(1, var(--k));
   background: var(--paper); color: var(--ink); font-family: Inter, system-ui, sans-serif;
-  box-shadow: 0 18px 50px -20px rgba(0,0,0,.6);
   padding: calc(14 * var(--mm)) calc(14 * var(--mm)) calc(12 * var(--mm));
   display: flex; flex-direction: column; gap: calc(7 * var(--mm));
   font-size: calc(4.2 * var(--mm));
@@ -91,8 +94,11 @@
 @media (prefers-reduced-motion: reduce) { .bv-stage { transition: none; } }
 
 @media print {
-  .bv-stage, .bv-stage.bv-a3 { container-type: normal; width: auto; max-width: none; margin: 0; }
-  .bv-sheet { --mm: calc(210mm / 238); width: 210mm; height: 296.4mm; aspect-ratio: auto; box-shadow: none; break-inside: avoid; }
-  .bv-sheet + .bv-sheet { margin-top: 0; break-before: page; }
-  .bv-a3 .bv-sheet { --mm: calc(297mm / 238); width: 297mm; height: 419.4mm; }
+  .bv-stage, .bv-stage.bv-a3 { width: auto; max-width: none; margin: 0; }
+  .bv-frame { width: 210mm; height: 296.4mm; aspect-ratio: auto; box-shadow: none; break-inside: avoid; }
+  .bv-frame + .bv-frame { margin-top: 0; break-before: page; }
+  .bv-a3 .bv-frame { width: 297mm; height: 419.4mm; }
+  /* 2380 px → 210 mm (793,7 px CSS) en A4, → 297 mm (1122,5 px CSS) en A3 */
+  .bv-sheet { transform: scale(.333488); }
+  .bv-a3 .bv-sheet { transform: scale(.471647); }
 }

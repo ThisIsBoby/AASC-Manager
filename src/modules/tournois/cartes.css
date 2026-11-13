@@ -1,19 +1,24 @@
 /* =====================================================================
    Cartes buvette, format carte de visite : 10 cartes de 85 × 52 mm par feuille A4
    (2 colonnes × 5 rangées, centrées), fond blanc.
-   Tailles en --mm : 1 mm imprimé ; à l'écran, --mm suit la largeur de l'aperçu.
+   La feuille est dessinée en grand (--mm = 10 px, soit 2100 × 2970 px) puis réduite d'un bloc
+   (transform: scale) à la largeur de l'aperçu, ou à 210 × 297 mm à l'impression.
+   Ainsi les petits textes (montants des cases) ne sont jamais agrandis par la taille
+   de police minimum du navigateur, qui débordaient des cases.
    Le contour en pointillés de chaque carte sert de trait de coupe.
    ===================================================================== */
-.cb-stage { container-type: inline-size; width: 100%; max-width: 820px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+.cb-stage { --s: .35; width: 100%; max-width: 820px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+/* Cadre à la taille affichée ; la feuille dessinée en grand y est réduite */
+.cb-frame { position: relative; width: 100%; aspect-ratio: 210 / 297; overflow: hidden; background: #FFFFFF; box-shadow: 0 18px 50px -20px rgba(0,0,0,.6); }
 
 .cb-page {
-  --mm: calc(100cqw / 210);
+  --mm: 10px;
+  position: absolute; left: 0; top: 0; width: 2100px; height: 2970px; transform-origin: 0 0; transform: scale(var(--s));
   --paper: #FFFFFF; --ink: #0E1A2E; --muted: #5B6678; --box: #8F9BAE; --cut: #B8C2D0;
   --orange: #EE7D1F; --blue: #1A5A9A; --blue-light: #2E7BC4;
-  width: 100%; aspect-ratio: 210 / 297; background: var(--paper); color: var(--ink);
+  background: var(--paper); color: var(--ink);
   display: grid; grid-template-columns: repeat(2, calc(85 * var(--mm))); grid-template-rows: repeat(5, calc(52 * var(--mm)));
   justify-content: center; align-content: center;
-  box-shadow: 0 18px 50px -20px rgba(0,0,0,.6);
   font-family: Inter, system-ui, sans-serif;
   -webkit-print-color-adjust: exact; print-color-adjust: exact;
 }
@@ -59,7 +64,9 @@
 .cb-num i { display: inline-block; width: calc(11 * var(--mm)); border-bottom: calc(.2 * var(--mm)) solid var(--box); margin-left: calc(.8 * var(--mm)); }
 
 @media print {
-  .cb-stage { container-type: normal; max-width: none; gap: 0; }
-  .cb-page { --mm: 1mm; width: 210mm; height: 296.4mm; aspect-ratio: auto; box-shadow: none; break-inside: avoid; }
-  .cb-page + .cb-page { break-before: page; }
+  .cb-stage { max-width: none; gap: 0; }
+  .cb-frame { width: 210mm; height: 296.4mm; aspect-ratio: auto; box-shadow: none; break-inside: avoid; }
+  .cb-frame + .cb-frame { break-before: page; }
+  /* 2100 px → 210 mm (793,7 px CSS) */
+  .cb-page { transform: scale(.377953); }
 }
