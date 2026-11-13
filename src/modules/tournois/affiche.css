@@ -1,0 +1,98 @@
+/* =====================================================================
+   Affiche buvette : feuille blanche aux couleurs du club.
+   Toutes les tailles sont en --mm, unité de dessin : la feuille fait 238 × 336,6 --mm
+   (proportions A4/A3). À l'écran, --mm suit la largeur de l'aperçu ; à l'impression,
+   la feuille fait exactement 210 × 297 mm (A4) ou 297 × 420 mm (A3) : même mise en page, agrandie.
+   ===================================================================== */
+.bv-stage { container-type: inline-size; width: 70.7%; max-width: 900px; margin: 0 auto; transition: width .3s ease; }
+.bv-stage.bv-a3 { width: 100%; }
+.bv-sheet + .bv-sheet { margin-top: 24px; }
+.bv-page { position: absolute; right: calc(14 * var(--mm)); bottom: calc(4 * var(--mm)); font-size: calc(3 * var(--mm)); color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.bv-sheet {
+  --mm: calc(100cqw / 238);
+  --k: 1;
+  --paper: #FFFFFF; --ink: #0E1A2E; --muted: #5B6678; --rule: #C9D1DD;
+  --orange: #EE7D1F; --orange-deep: #E8641A; --blue: #1A5A9A; --blue-light: #2E7BC4;
+  position: relative; overflow: hidden; width: 100%; aspect-ratio: 210 / 297;
+  --kh: min(1, var(--k));
+  background: var(--paper); color: var(--ink); font-family: Inter, system-ui, sans-serif;
+  box-shadow: 0 18px 50px -20px rgba(0,0,0,.6);
+  padding: calc(14 * var(--mm)) calc(14 * var(--mm)) calc(12 * var(--mm));
+  display: flex; flex-direction: column; gap: calc(7 * var(--mm));
+  font-size: calc(4.2 * var(--mm));
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+.bv-sheet *, .bv-sheet *::before, .bv-sheet *::after { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+/* Traînées de vitesse reprises du logo : traits fins, peu d'encre */
+.bv-streaks { position: absolute; pointer-events: none; }
+.bv-streaks i { position: absolute; display: block; height: calc(1.6 * var(--mm)); border-radius: 99px; transform: skewX(-24deg) rotate(-14deg); }
+.bv-streaks.top { left: calc(-10 * var(--mm)); top: calc(26 * var(--mm)); width: calc(120 * var(--mm)); height: calc(50 * var(--mm)); }
+.bv-streaks.bottom { left: calc(-12 * var(--mm)); bottom: calc(2 * var(--mm)); width: calc(70 * var(--mm)); height: calc(14 * var(--mm)); }
+.bv-o { background: var(--orange); } .bv-b { background: var(--blue-light); } .bv-n { background: var(--ink); }
+
+/* En-tête */
+.bv-head { position: relative; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: calc(6 * var(--mm)); }
+.bv-head > div { min-width: 0; }
+.bv-club { font-family: "Exo 2", system-ui, sans-serif; font-weight: 800; font-style: italic; text-transform: uppercase; letter-spacing: .08em;
+  font-size: calc(4 * var(--mm)); color: var(--blue); margin: 0 0 calc(1 * var(--mm)); }
+.bv-title { font-family: "Exo 2", system-ui, sans-serif; font-weight: 900; font-style: italic; text-transform: uppercase; line-height: .82;
+  font-size: calc(33 * var(--mm)); letter-spacing: -.02em; margin: 0; color: var(--ink); }
+.bv-title span { color: var(--orange); }
+.bv-event { display: flex; flex-wrap: wrap; align-items: center; gap: calc(1.5 * var(--mm)) calc(3 * var(--mm)); margin-top: calc(5 * var(--mm));
+  font-family: "Exo 2", system-ui, sans-serif; font-weight: 800; font-style: italic; text-transform: uppercase; font-size: calc(4.4 * var(--mm)); letter-spacing: .02em; }
+.bv-tag { background: var(--orange); color: var(--paper); padding: calc(1.2 * var(--mm)) calc(4 * var(--mm)); transform: skewX(-18deg); max-width: 100%; }
+.bv-tag span { display: inline-block; transform: skewX(18deg); }
+.bv-date { color: var(--blue); }
+.bv-logo { width: calc(50 * var(--mm)); height: calc(50 * var(--mm)); object-fit: contain; }
+
+/* Carte */
+.bv-menu { position: relative; flex: 1; min-height: 0; overflow: hidden; display: grid; grid-template-columns: 1fr 1fr; gap: calc(10 * var(--mm)); align-content: start; }
+.bv-menu.bv-une { grid-template-columns: 1fr; padding-inline: calc(25 * var(--mm)); }
+.bv-col { display: flex; flex-direction: column; gap: calc(8 * var(--k) * var(--mm)); min-width: 0; }
+.bv-rub h2 { display: flex; align-items: center; gap: calc(2.5 * var(--mm)); margin: 0 0 calc(2.5 * var(--k) * var(--mm)); }
+.bv-pill { display: inline-flex; align-items: center; transform: skewX(-18deg); padding: calc(1.2 * var(--kh) * var(--mm)) calc(3.5 * var(--mm)); color: var(--paper);
+  font-family: "Exo 2", system-ui, sans-serif; font-weight: 900; font-style: italic; text-transform: uppercase; font-size: calc(4.6 * var(--kh) * var(--mm)); letter-spacing: .03em; }
+.bv-pill > span { display: inline-flex; align-items: center; gap: calc(2 * var(--mm)); transform: skewX(18deg); }
+.bv-pill svg { width: calc(4.6 * var(--kh) * var(--mm)); height: calc(4.6 * var(--kh) * var(--mm)); }
+.bv-rub h2::after { content: ""; flex: 1; height: calc(.6 * var(--mm)); transform: skewX(-18deg); }
+.bv-drink h2 .bv-pill, .bv-drink h2::after { background: var(--blue); }
+.bv-food h2 .bv-pill, .bv-food h2::after { background: var(--orange); }
+.bv-rub ul { list-style: none; margin: 0; padding: 0; }
+.bv-rub li { display: flex; align-items: baseline; gap: calc(2 * var(--mm)); padding: calc(2.3 * var(--k) * var(--mm)) 0; }
+.bv-name { font-weight: 600; font-size: calc(4.7 * var(--k) * var(--mm)); min-width: 0; overflow-wrap: anywhere; }
+.bv-lead { flex: 1; min-width: calc(4 * var(--mm)); border-bottom: calc(.5 * var(--mm)) dotted var(--rule); transform: translateY(calc(-1 * var(--mm))); }
+.bv-price { font-family: "Exo 2", system-ui, sans-serif; font-weight: 900; font-style: italic; font-size: calc(7.6 * var(--k) * var(--mm)); line-height: 1; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.bv-price small { font-size: .62em; margin-left: .08em; color: var(--orange); }
+.bv-drink .bv-price small { color: var(--blue-light); }
+.bv-vide { margin: auto; text-align: center; color: var(--muted); font-size: calc(5 * var(--mm)); }
+
+/* Pied : paiement et cartes buvette */
+.bv-foot { position: relative; border-top: calc(1.2 * var(--mm)) solid var(--ink); padding-top: calc(5 * var(--mm));
+  display: grid; grid-template-columns: 1fr auto; gap: calc(6 * var(--mm)); align-items: center; }
+.bv-foot h3 { margin: 0 0 calc(2 * var(--mm)); font-family: "Exo 2", system-ui, sans-serif; font-weight: 900; font-style: italic; text-transform: uppercase; font-size: calc(4.4 * var(--mm)); letter-spacing: .03em; color: var(--ink); }
+.bv-pay { display: flex; flex-direction: column; gap: calc(1.8 * var(--mm)); }
+.bv-pay p { margin: 0; display: flex; align-items: center; gap: calc(2.5 * var(--mm)); font-size: calc(4 * var(--mm)); font-weight: 500; }
+.bv-pay svg { width: calc(6 * var(--mm)); height: calc(6 * var(--mm)); color: var(--blue); flex: none; }
+.bv-pay b { font-weight: 700; }
+.bv-cards-block { display: flex; flex-direction: column; align-items: flex-end; gap: calc(2 * var(--mm)); }
+.bv-cards { display: flex; gap: calc(4 * var(--mm)); }
+.bv-card { position: relative; width: calc(36 * var(--mm)); aspect-ratio: 85.6 / 54; border: calc(.8 * var(--mm)) solid var(--ink); border-radius: calc(3 * var(--mm));
+  padding: calc(2.5 * var(--mm)) calc(3 * var(--mm)); display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; transform: rotate(-4deg); }
+.bv-card + .bv-card { transform: rotate(3deg); }
+.bv-card::before { content: ""; position: absolute; left: calc(-4 * var(--mm)); right: calc(-4 * var(--mm)); top: 38%; height: calc(2.4 * var(--mm)); background: var(--orange); transform: skewY(-10deg); }
+.bv-card + .bv-card::before { background: var(--blue-light); }
+.bv-card .bv-lbl { position: relative; font-family: "Exo 2", system-ui, sans-serif; font-weight: 800; font-style: italic; text-transform: uppercase; font-size: calc(2.6 * var(--mm)); letter-spacing: .08em; }
+.bv-card .bv-val { position: relative; align-self: flex-end; font-family: "Exo 2", system-ui, sans-serif; font-weight: 900; font-style: italic; font-size: calc(11 * var(--mm)); line-height: .9; }
+.bv-hint { margin: 0; font-size: calc(3.2 * var(--mm)); color: var(--muted); text-align: right; }
+.bv-thanks { grid-column: 1 / -1; margin: 0; text-align: center; font-family: "Exo 2", system-ui, sans-serif; font-weight: 800; font-style: italic; font-size: calc(3.8 * var(--mm)); color: var(--blue); letter-spacing: .02em; }
+
+@media (prefers-reduced-motion: reduce) { .bv-stage { transition: none; } }
+
+@media print {
+  .bv-stage, .bv-stage.bv-a3 { container-type: normal; width: auto; max-width: none; margin: 0; }
+  .bv-sheet { --mm: calc(210mm / 238); width: 210mm; height: 296.4mm; aspect-ratio: auto; box-shadow: none; break-inside: avoid; }
+  .bv-sheet + .bv-sheet { margin-top: 0; break-before: page; }
+  .bv-a3 .bv-sheet { --mm: calc(297mm / 238); width: 297mm; height: 419.4mm; }
+}
