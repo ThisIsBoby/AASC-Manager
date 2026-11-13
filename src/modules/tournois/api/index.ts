@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/core/supabase'
-import type { ModeleChecklist, ModeleChecklistTache, TournoiTache } from '@/core/types'
+import type { BuvetteLigne, ModeleChecklist, ModeleChecklistTache, TournoiTache } from '@/core/types'
+import { copierLignes } from '../buvette'
 
 async function q<T>(p: PromiseLike<{ data: unknown; error: unknown }>): Promise<T> {
   const { data, error } = await p
@@ -59,5 +60,73 @@ export function useSaveModeleChecklistTaches() {
       if (taches.length) await q(supabase.from('modeles_checklist_taches').insert(taches.map(t => ({ ...t, modele_id: modeleId }))))
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['modeles_checklist_taches'] }),
+  })
+}
+
+// ---------------- Buvette ----------------
+/** Toutes les lignes de buvette (volume faible) : sert aussi à « Reprendre une buvette » */
+export const useBuvetteLignes = () =>
+  useQuery({
+    queryKey: ['buvette_lignes'],
+    queryFn: () => q<BuvetteLigne[]>(supabase.from('buvette_lignes').select('*').order('ordre')),
+  })
+
+type NouvelleLigne = Omit<BuvetteLigne, 'id' | 'created_at'>
+
+export function useAjouterLignesBuvette() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (lignes: NouvelleLigne[]) => q(supabase.from('buvette_lignes').insert(lignes)),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['buvette_lignes'] }),
+  })
+}
+
+/** Modifie une ligne, avec affichage immédiat */
+export function useModifierLigneBuvette() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...p }: Partial<BuvetteLigne> & { id: string }) => q(supabase.from('buvette_lignes').update(p).eq('id', id)),
+    onMutate: async p => {
+      await qc.cancelQueries({ queryKey: ['buvette_lignes'] })
+      const prev = qc.getQueryData<BuvetteLigne[]>(['buvette_lignes'])
+      qc.setQueryData<BuvetteLigne[]>(['buvette_lignes'], l => l?.map(x => x.id === p.id ? { ...x, ...p } : x))
+      return { prev }
+    },
+    onError: (_e, _p, ctx) => { if (ctx?.prev) qc.setQueryData(['buvette_lignes'], ctx.prev) },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['buvette_lignes'] }),
+  })
+}
+
+/** Échange l'ordre de deux lignes (monter / descendre) */
+export function useEchangerOrdreBuvette() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ([a, b]: [BuvetteLigne, BuvetteLigne]) => {
+      // Ordres égaux (lignes ajoutées ensemble) : on les rend distincts
+      const oa = a.ordre === b.ordre ? b.ordre + 1 : b.ordre
+      await q(supabase.from('buvette_lignes').update({ ordre: oa }).eq('id', a.id))
+      await q(supabase.from('buvette_lignes').update({ ordre: a.ordre }).eq('id', b.id))
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['buvette_lignes'] }),
+  })
+}
+
+export function useSupprimerLigneBuvette() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => q(supabase.from('buvette_lignes').delete().eq('id', id)),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['buvette_lignes'] }),
+  })
+}
+
+/** Remplace la buvette d'un événement par celle d'un autre */
+export function useReprendreBuvette() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ tournoiId, source }: { tournoiId: string; source: BuvetteLigne[] }) => {
+      await q(supabase.from('buvette_lignes').delete().eq('tournoi_id', tournoiId))
+      if (source.length) await q(supabase.from('buvette_lignes').insert(copierLignes(source, tournoiId)))
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['buvette_lignes'] }),
   })
 }

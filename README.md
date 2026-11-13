@@ -7,7 +7,7 @@ front React hébergé sur **GitHub Pages**, données et comptes sur **Supabase**
 
 | Module | Contenu |
 | --- | --- |
-| **Stock & Inventaire** | Caisses identifiées par QR code, éléments (désignation, quantité, date d'achat, péremption), scanner, entrées/sorties/transferts, historique, alertes péremption et stock bas, préparation de tournoi selon le nombre de joueurs, liste d'achats, étiquettes QR imprimables |
+| **Stock & Inventaire** | Caisses identifiées par QR code, éléments (désignation, quantité, date d'achat, péremption), scanner, entrées/sorties/transferts, historique, alertes péremption et stock bas, préparation de tournoi selon le nombre de joueurs, liste d'achats, étiquettes QR imprimables, fiche et affiche buvette des événements |
 | **Boutique & Cordage** | Saisie des ventes aux adhérents (tubes de volants, vêtements par taille…) et des demandes de cordage (offres club / joueur / offert, suivi Déposée → Cordée → Rendue), prix paramétrables, suivi des paiements (moyen, impayés). Les articles sont des produits du stock : une vente sort la quantité du stock |
 | **Adhérents** | Liste des licenciés, fiche avec achats / cordages / reste à payer, import CSV à chaque saison |
 | **Administration** | Validation des demandes d'accès, rôles admin / utilisateur, désactivation de comptes |
@@ -28,7 +28,7 @@ Les droits sont appliqués dans la base (Row Level Security), pas seulement dans
 
 ### 1. Supabase
 1. Créer un compte sur <https://supabase.com> puis un **nouveau projet** (région Europe).
-2. *SQL Editor* → coller et exécuter `supabase/migrations/0001_init.sql`, puis `supabase/migrations/0002_checklist.sql` (checklists de tournoi), puis `supabase/migrations/0003_boutique.sql` (adhérents, boutique, cordage), puis `supabase/migrations/0004_produits_unifies.sql` (une seule base Produits pour le stock et la boutique), puis `supabase/migrations/0005_tournoi_type.sql` (type Tournoi / Interclub), puis `supabase/migrations/0006_type_evenement.sql` (type Événement), puis `supabase/migrations/0007_inventaire.sql` (inventaires : comptage des caisses et écarts), puis `supabase/migrations/0008_relances.sql` (date de relance des impayés).
+2. *SQL Editor* → coller et exécuter `supabase/migrations/0001_init.sql`, puis `supabase/migrations/0002_checklist.sql` (checklists de tournoi), puis `supabase/migrations/0003_boutique.sql` (adhérents, boutique, cordage), puis `supabase/migrations/0004_produits_unifies.sql` (une seule base Produits pour le stock et la boutique), puis `supabase/migrations/0005_tournoi_type.sql` (type Tournoi / Interclub), puis `supabase/migrations/0006_type_evenement.sql` (type Événement), puis `supabase/migrations/0007_inventaire.sql` (inventaires : comptage des caisses et écarts), puis `supabase/migrations/0008_relances.sql` (date de relance des impayés), puis `supabase/migrations/0009_buvette.sql` (fiche buvette et affiche des événements).
 3. (Optionnel) exécuter `supabase/seed.sql` pour des produits, caisses et un modèle de tournoi d'exemple.
 4. *Authentication → URL Configuration* :
    - **Site URL** : `https://<votre-compte>.github.io/<nom-du-depot>/`
@@ -91,6 +91,15 @@ Un **modèle** liste pour chaque produit une *quantité fixe* et une *quantité 
 Besoin = fixe + arrondi supérieur(par joueur × nb joueurs). La page du tournoi compare au stock non périmé
 et peut **sortir du stock** les quantités (lots les plus proches de la péremption d'abord).
 *Achats à faire* = seuil minimum + besoins des tournois en préparation − stock non périmé.
+
+## Buvette
+Chaque événement a un onglet **Buvette** : on y choisit les produits vendus (depuis *Stock › Produits*, le prix de vente
+est repris, ou un article libre comme « Crêpe maison »), on ajuste les prix pour l'événement (le prix du produit n'est pas modifié),
+on les range par rubrique (Boissons fraîches, Boissons chaudes, Salé, Sucré) et on masque ce qui est en rupture.
+*Reprendre une buvette* copie la liste d'un événement précédent.
+*Affiche* ouvre l'affiche aux couleurs du club, fond blanc pour économiser l'encre, à imprimer en **A4** (comptoir)
+ou **A3** (mur, visible de loin). Dans la fenêtre d'impression, choisir le même format de papier, échelle 100 %.
+Le texte s'adapte au nombre de produits ; s'il devait devenir trop petit, l'affiche passe sur 2 pages (sans couper une rubrique).
 
 ## Boutique, cordage et adhérents
 - **Une seule base : Stock › Produits.** Stock, seuil, prix de vente et tailles se gèrent au même endroit.

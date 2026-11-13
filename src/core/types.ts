@@ -85,6 +85,12 @@ export interface Tournoi {
   modele_id: string | null; statut: 'prepa' | 'termine'; created_at: string
 }
 
+export type RubriqueBuvette = 'fraiche' | 'chaude' | 'sale' | 'sucre'
+export interface BuvetteLigne {
+  id: string; tournoi_id: string; produit_id: string | null; libelle: string
+  rubrique: RubriqueBuvette; prix: number; ordre: number; visible: boolean; created_at: string
+}
+
 export interface Adherent {
   id: string; licence: string | null; nom: string; prenom: string; sexe: string
   date_naissance: string | null; email: string; telephone: string; categorie: string

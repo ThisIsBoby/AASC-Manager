@@ -3,6 +3,7 @@ import type { AppModule } from '@/core/modules'
 import { TournoisListePage } from './pages/TournoisListePage'
 import { TournoiDashboardPage } from './pages/TournoiDashboardPage'
 import { ModelesPage } from './pages/ModelesPage'
+import { BuvetteAffichePage } from './pages/BuvetteAffichePage'
 import { TournoisAccueil } from './components/TournoisAccueil'
 
 export const tournoisModule: AppModule = {
@@ -17,5 +18,6 @@ export const tournoisModule: AppModule = {
     { path: 'tournois', element: <TournoisListePage /> },
     { path: 'tournois/modeles', element: <ModelesPage /> },
     { path: 'tournois/:id', element: <TournoiDashboardPage /> },
+    { path: 'tournois/:id/buvette', element: <BuvetteAffichePage /> },
   ],
 }

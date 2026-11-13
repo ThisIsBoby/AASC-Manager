@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import { AlertTriangle, ArrowLeft, CalendarClock, ClipboardCheck, ListChecks, Package, Pencil, Printer, Trash2 } from 'lucide-react'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { AlertTriangle, ArrowLeft, CalendarClock, ClipboardCheck, CupSoda, ListChecks, Package, Pencil, Printer, Trash2 } from 'lucide-react'
 import { useAuth } from '@/core/auth/AuthProvider'
 import { errMsg } from '@/core/supabase'
 import type { Tournoi, TypeTournoi } from '@/core/types'
@@ -9,11 +9,13 @@ import { useDelete, useTournois, useUpsert } from '@/modules/stock/api'
 import { fmtDate } from '@/modules/stock/components/shared'
 import { useTournoiTaches } from '../api'
 import { BesoinsStock } from '../components/BesoinsStock'
+import { BuvetteFiche } from '../components/BuvetteFiche'
 import { Checklist } from '../components/Checklist'
 import { avecArticle, compteARebours, libelleType, progression, TYPES_TOURNOI } from '../logic'
 
 export function TournoiDashboardPage() {
   const { id } = useParams()
+  const [sp] = useSearchParams()
   const nav = useNavigate()
   const toast = useToast()
   const { isAdmin } = useAuth()
@@ -21,7 +23,9 @@ export function TournoiDashboardPage() {
   const t = tournois.data?.find(x => x.id === id)
   const toutes = useTournoiTaches()
   const del = useDelete('tournois', ['tournois', 'tournoi_taches'])
-  const [onglet, setOnglet] = useState<'checklist' | 'stock'>('checklist')
+  const [onglet, setOnglet] = useState<'checklist' | 'stock' | 'buvette'>(() => {
+    const o = sp.get('onglet'); return o === 'stock' || o === 'buvette' ? o : 'checklist'
+  })
   const [edition, setEdition] = useState(false)
 
   if (tournois.isLoading) return <Spinner />
@@ -58,16 +62,17 @@ export function TournoiDashboardPage() {
         <StatTile label="Compte à rebours" value={rebours ?? '—'} tone="blue" />
       </div>
 
-      <div className="no-print mb-5 flex gap-2">
+      <div className="no-print mb-5 flex flex-wrap gap-2">
         <button className={`btn ${onglet === 'checklist' ? 'bg-aasc-orange text-white' : 'btn-ghost'}`} onClick={() => setOnglet('checklist')}><ListChecks size={16} /> Checklist</button>
         <button className={`btn ${onglet === 'stock' ? 'bg-aasc-orange text-white' : 'btn-ghost'}`} onClick={() => setOnglet('stock')}>
           <Package size={16} /> Besoins stock {t.statut === 'termine' && <Badge tone="green">sorti</Badge>}
         </button>
+        <button className={`btn ${onglet === 'buvette' ? 'bg-aasc-orange text-white' : 'btn-ghost'}`} onClick={() => setOnglet('buvette')}><CupSoda size={16} /> Buvette</button>
       </div>
 
       {onglet === 'checklist'
         ? (toutes.isLoading ? <Spinner /> : <Checklist t={t} taches={taches} />)
-        : <BesoinsStock t={t} />}
+        : onglet === 'stock' ? <BesoinsStock t={t} /> : <BuvetteFiche t={t} />}
 
       {edition && <EditTournoi t={t} onClose={() => setEdition(false)} />}
     </div>
