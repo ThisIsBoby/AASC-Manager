@@ -9,6 +9,7 @@ import { useAdherentsMap } from '@/modules/adherents/api'
 import { nomComplet } from '@/modules/adherents/logic'
 import { useAnnulerVente, useAvancerCordage } from '../api'
 import { STATUTS, etapeSuivante, fmtEuro } from '../logic'
+import { BoutonRelanceLigne } from './relances'
 import { PaiementCell, StatutBadge } from './shared'
 
 function NomAdherent({ id }: { id: string | null }) {
@@ -44,7 +45,14 @@ export function VentesTable({ ventes, avecAdherent = true }: { ventes: Vente[]; 
                 {v.note && <p className="text-xs text-slate-500">{v.note}</p>}
               </td>
               <td className="whitespace-nowrap text-right font-semibold tabular-nums">{fmtEuro(v.total)}</td>
-              <td>{v.annulee ? <span className="text-xs text-slate-500">Annulée</span> : <PaiementCell table="ventes" id={v.id} paye={v.paye} moyen={v.moyen_paiement} montant={v.total} />}</td>
+              <td>{v.annulee ? <span className="text-xs text-slate-500">Annulée</span> : (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <PaiementCell table="ventes" id={v.id} paye={v.paye} moyen={v.moyen_paiement} montant={v.total} />
+                  {!v.paye && Number(v.total) > 0 && <BoutonRelanceLigne adherentId={v.adherent_id} />}
+                </div>
+              )}
+                {!v.paye && v.relance_le && <p className="mt-0.5 text-[11px] text-slate-500">relancé le {fmtDate(v.relance_le, 'dd/MM')}</p>}
+              </td>
               {isAdmin && <td className="text-right">{!v.annulee && (
                 <button className="btn-icon btn-ghost" title="Annuler la vente" disabled={annuler.isPending} onClick={() => doAnnuler(v)}><Undo2 size={14} /></button>
               )}</td>}
@@ -101,7 +109,13 @@ export function CordagesTable({ cordages, avecAdherent = true }: { cordages: Cor
                   {c.rendu_le ? <p className="mt-0.5 text-[11px] text-slate-500">rendue le {fmtDate(c.rendu_le, 'dd/MM')}</p>
                     : c.corde_le ? <p className="mt-0.5 text-[11px] text-slate-500">cordée le {fmtDate(c.corde_le, 'dd/MM')}</p> : null}
                 </td>
-                <td><PaiementCell table="cordages" id={c.id} paye={c.paye} moyen={c.moyen_paiement} montant={c.prix} /></td>
+                <td>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <PaiementCell table="cordages" id={c.id} paye={c.paye} moyen={c.moyen_paiement} montant={c.prix} />
+                    {!c.paye && Number(c.prix) > 0 && <BoutonRelanceLigne adherentId={c.adherent_id} />}
+                  </div>
+                  {!c.paye && c.relance_le && <p className="mt-0.5 text-[11px] text-slate-500">relancé le {fmtDate(c.relance_le, 'dd/MM')}</p>}
+                </td>
               </tr>
             )
           })}
